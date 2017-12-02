@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <stack>
+#include <queue>
 #include "node.hpp"
 using namespace std;
 
@@ -18,12 +19,13 @@ public:
 		this->row = row;
 		this->col = col;
 	}
-
 	vector<vector<int>> solve(vector<vector<int>>& input);
 	void create_link_table(vector<vector<int>>& input);
-	void dlx(vector<vector<int>>& input, vector<int> result);
+	void dlx(vector<vector<int>>& input, vector<int>& result, int steps);
 	void remove_link(Node* node, string mode);
+	Node* find_next(Node* node, string mode);
 };
+
 
 void Solver::create_link_table(vector<vector<int>>& input) {
 	// create assistant node
@@ -71,6 +73,37 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 	}
 }
 
+
+Node* Solver::find_next(Node* node, string mode) {
+	Node* cur = nullptr;
+	if (mode == "right") {
+		cur = node->right;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->right;
+		}
+	}
+	else if (mode == "left") {
+		cur = node->left;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->left;
+		}
+	}
+	else if (mode == "up") {
+		cur = node->up;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->up;
+		}
+	}
+	else if (mode == "down") {
+		cur = node->down;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->down;
+		}
+	}
+	return cur;
+}
+
+
 void Solver::remove_link(Node* node, string mode) {
 	// v = vertical; h = horizontal
 	if (mode == "v") {
@@ -91,34 +124,107 @@ void Solver::remove_link(Node* node, string mode) {
 	}
 }
 
-void Solver::dlx(vector<vector<int>>& input, vector<int> result) {
-	if (head->right == head) {
+
+void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
+	if (find_next(head, "right") == head) {
 		final_result.push_back(result);
 		return;
 	}
-	Node* next_to_head = head->right;
-	remove_link(next_to_head, "v");
+	Node* next_to_head = find_next(head, "right");
+	if (find_next(next_to_head, "down") == next_to_head) {
+		return;
+	}
 
-	Node* cur = next_to_head->down;
-	stack<Node*> node_stack;
+	// 插紫色点的合集，用于恢复
+	vector<Node*> p_set;
+
+	// next_to_head is C1， cur is 4
+	Node* cur = find_next(next_to_head, "down");
+	queue<Node*> node_queue;
 	while (cur != next_to_head) {
-		node_stack.push(cur);
-		cur = cur->down;
+		node_queue.push(cur);
+		// cur_2 is 5
+		// 把 4,10 一整行都弄成紫色
+		Node* cur_2 = find_next(cur, "right");
+		while (cur_2 != cur) {
+			cur_2->p_mark = steps;
+			p_set.push_back(cur_2);
+			cur_2 = find_next(cur_2, "right");
+			
+		}
+		cur->p_mark = steps;
+		p_set.push_back(cur);
+		cur = find_next(cur, "down");
+	}
+	next_to_head->p_mark = steps;
+	p_set.push_back(next_to_head);
+
+	while (!node_queue.empty()) {
+		// 插橙色的点，用于恢复
+		vector<Node*> o_set;
+
+		// critical_node is 4
+		Node* critical_node = node_queue.front();
+		node_queue.pop();
+		result.push_back(critical_node->row_index);
+
+		// cur2 is 5
+		Node* cur2 = critical_node->right;
+		while (cur2 != critical_node) {
+			// 把5一整列弄成橙色
+			Node* ver_iter = cur2->down;
+			while (ver_iter != cur2) {
+				if (ver_iter->o_mark != 0 || ver_iter->p_mark != 0) {
+					ver_iter = ver_iter->down;
+					continue;
+				}
+				if (!ver_iter->is_head) {
+					//把经过的节点的横行弄成橙色
+					// hori_iter is 14
+					Node* hori_iter = ver_iter->right;
+					while (hori_iter != ver_iter) {
+						if (hori_iter->p_mark == 0 && hori_iter->o_mark == 0) {
+							hori_iter->o_mark = steps;
+							o_set.push_back(hori_iter);
+						}
+						hori_iter = hori_iter->right;
+					}
+				}
+				ver_iter->o_mark = steps;
+				o_set.push_back(ver_iter);
+				ver_iter = ver_iter->down;
+			}
+			cur2 = cur2->right;
+		}
+		
+		// 开始递归调用
+		dlx(input, result, steps + 1);
+
+		// 开始恢复橙色的点
+		result.pop_back();
+		for (Node* o : o_set) {
+			o->o_mark = 0;
+		}
+		o_set.clear();
 	}
 
-	while (!node_stack.empty()) {
-		Node* critical_node = node_stack.top();
-		node_stack.pop();
-
+	//开始恢复紫色的点
+	for (Node* p : p_set) {
+		p->p_mark = 0;
 	}
-
-
 }
 
 vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	create_link_table(input);
 	vector<int> result;
-	dlx(input, result);
+	dlx(input, result, 1);
+	//Node* node = head->move_node("right", 7);
+	//int count = 0;
+	//while (count < 10) {
+	//	cout << node->p_mark << " " << node->o_mark << endl;
+	//	count++;
+	//	node = node->down;
+	//}
 	return final_result;
 }
 

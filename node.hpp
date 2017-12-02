@@ -13,7 +13,8 @@ private:
 	int row_index;
 	int col_index;
 	bool is_head;
-
+	int p_mark = 0;
+	int o_mark = 0;
 public:
 	friend class Solver;
 	Node(int row_index = -1, int col_index = -1, bool is_head = false) {
@@ -56,5 +57,4 @@ Node* Node::go_to_end() {
 		cur = cur->down;
 	}
 	return cur;
-
 }
