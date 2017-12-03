@@ -21,7 +21,7 @@ private:
 			return (p1.first == p2.first && p1.second == p2.second);
 		}
 	};
-
+	int tile_number = 0;
 	unordered_map<pair<int, int>, char, hash_func, cmp_func> index2value;
 	unordered_map<pair<int, int>, int, hash_func, cmp_func> position2col;
 public:
@@ -43,16 +43,41 @@ public:
 	};
 
 	bool check(Tile* cur, int row_offset, int col_offset);
-	void input_process(string path, vector<vector<int>>& input);
+	bool check_is_diff(vector<Tile*>& single, Tile* tt);
+	bool is_contain_point(Point* target, Tile* t);
+	void input_process(string path, vector<vector<int>>& input, bool f_and_r);
 	void create_index2value();
 };
+
+bool Input::is_contain_point(Point* target, Tile* t) {
+	for (Point* p : t->point_set) {
+		if (target->row_index == p->row_index && target->col_index == p->col_index && target->value == p->value) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Input::check_is_diff(vector<Tile*>& single, Tile* tt) {
+	for (Tile* t : single) {
+		bool flag = false;
+		for (Point* p : t->point_set) {
+			if (!is_contain_point(p, tt)) {
+				flag = true;
+				break;
+			}
+		}
+		if (!flag) return false;
+	}
+	return true;
+}
 
 
 void Input::create_index2value() {
 	for (Point* p : board->point_set) {
 		index2value[make_pair(p->row_index, p->col_index)] = p->value;
 	}
-	int start_col = tile_set.size();
+	int start_col = tile_number;
 	for (Point* p : board->point_set) {
 		position2col[make_pair(p->row_index, p->col_index)] = start_col;
 		start_col++;
@@ -70,7 +95,7 @@ bool Input::check(Tile* cur, int row_offset, int col_offset) {
 	return true;
 }
 
-void Input::input_process(string path, vector<vector<int>>& input) {
+void Input::input_process(string path, vector<vector<int>>& input, bool f_and_r) {
 	char data[256];
 	vector<string> input_string;
 	ifstream infile;
@@ -146,6 +171,11 @@ void Input::input_process(string path, vector<vector<int>>& input) {
 	}
 	tile_set.erase(tile_set.begin() + position);
 
+	// 给tile编号
+	for (int i = 0; i < (int)tile_set.size(); i++) {
+		tile_set[i]->index = i;
+	}
+
 	int total_sum = 0;
 	for (Tile* t : tile_set) {
 		total_sum += t->point_set.size();
@@ -155,12 +185,80 @@ void Input::input_process(string path, vector<vector<int>>& input) {
 		system("pause");
 		exit(-1);
 	}
+	tile_number = tile_set.size();
+	cout << tile_number << endl;
+	// 判断旋转或者翻转
+	if (f_and_r) {
+		vector<Tile*> new_tile_set = tile_set;
+		for (Tile* t : new_tile_set) {
+			vector<Tile*> temp;
+			for (int i = 0; i < 7; i++) {
+				Tile* t1 = new Tile();
+				temp.push_back(t1);
+			}
+			for (Point* p : t->point_set) {
+				int p_row = p->row_index, p_col = p->col_index, val = p->value;
+				Point* p1 = new Point(p_row, -p_col, val);
+				temp[0]->point_set.push_back(p1);
+
+				Point* p2 = new Point(-p_row, p_col, val);
+				temp[1]->point_set.push_back(p2);
+
+				Point* p3 = new Point(-p_row, -p_col, val);
+				temp[2]->point_set.push_back(p3);
+
+				Point* p4 = new Point(p_col, p_row, val);
+				temp[3]->point_set.push_back(p4);
+
+				Point* p5 = new Point(p_col, -p_row, val);
+				temp[4]->point_set.push_back(p5);
+
+				Point* p6 = new Point(-p_col, p_row, val);
+				temp[5]->point_set.push_back(p6);
+
+				Point* p7= new Point(-p_col, -p_row, val);
+				temp[6]->point_set.push_back(p7);
+			}
+			int ind = t->index;
+			vector<Tile*> single;
+			single.push_back(t);
+			for (Tile* tt : temp) {
+				tt->index = ind;
+				tt->init();
+				if (check_is_diff(single, tt)) {
+					single.push_back(tt);
+					tile_set.push_back(tt);
+				}
+			}
+		}
+	}
+
+	// 测试
+	//for (Tile* t : tile_set) {
+	//	cout << t->index << endl;
+	//	for (Point* p : t->point_set) {
+	//		cout << p->row_index << " " << p->col_index << " " << p->value << endl;
+	//	}
+	//	cout << endl;
+	//}
+
+	//Tile* debug = new Tile();
+	//Point* a = new Point(0, 0, 'X');
+	//Point* b = new Point(0, 1, 'X');
+	//Point* c = new Point(1, 0, 'X');
+	//Point* d = new Point(2, 0, 'X');
+	//debug->point_set.push_back(a);
+	//debug->point_set.push_back(b);
+	//debug->point_set.push_back(c);
+	//debug->point_set.push_back(d);
+	//cout << single.size() << endl;
+	//cout << check_is_diff(single, debug) << endl;
 
 	// 建立坐标和board里value的映射表
 	create_index2value();
 
 	// 开始生成return的matrix
-	int matrix_col_size = tile_set.size() + board->point_set.size();
+	int matrix_col_size = tile_number + board->point_set.size();
 	int row_index = 0;
 	for (int index = 0; index < (int)tile_set.size(); index++) {
 		Tile* cur = tile_set[index];
@@ -169,14 +267,14 @@ void Input::input_process(string path, vector<vector<int>>& input) {
 			for (int j = 0; j <= board->right - cur->right; j++) {
 				vector<int> temp(matrix_col_size, 0);
 				if (check(cur, i, j)) {
-					temp[index] = 1;
+					temp[cur->index] = 1;
 					for (Point* p : cur->point_set) {
 						int col_index = position2col[make_pair(p->row_index + i, p->col_index + j)];
 						temp[col_index] = 1;
 					}
 
 					vector<int> position(3, 0);
-					position[0] = index;
+					position[0] = cur->index;
 					position[1] = i;
 					position[2] = j;
 					(*row2position)[row_index] = position;

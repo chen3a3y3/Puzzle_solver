@@ -127,6 +127,8 @@ void Solver::remove_link(Node* node, string mode) {
 
 void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
 	if (find_next(head, "right") == head) {
+		for (auto i : result) cout << i << " ";
+		cout << endl;
 		final_result.push_back(result);
 		return;
 	}
@@ -218,13 +220,6 @@ vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	create_link_table(input);
 	vector<int> result;
 	dlx(input, result, 1);
-	//Node* node = head->move_node("right", 7);
-	//int count = 0;
-	//while (count < 10) {
-	//	cout << node->p_mark << " " << node->o_mark << endl;
-	//	count++;
-	//	node = node->down;
-	//}
 	return final_result;
 }
 

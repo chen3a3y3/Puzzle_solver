@@ -23,6 +23,7 @@ public:
 	int up = INT_MAX;
 	int down = 0;
 	int point_num = 0;
+	int index = -1;
 
 	vector<Point*> point_set;
 	Tile() {}
