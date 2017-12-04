@@ -1,6 +1,8 @@
 #include "solver.h"
 #include "viewer.h"
 #include "input_process.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 void Solver::create_link_table(vector<vector<int>>& input) {
 	// create assistant node
@@ -204,8 +206,10 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 }
 
 vector<vector<int>> Solver::solve(vector<vector<int>>& input, Input& in) {
+	if (show_details) cv::namedWindow("Progress", cv::WINDOW_AUTOSIZE);
 	create_link_table(input);
 	vector<int> result;
 	dlx(input, result, 1, in);
+	if (show_details) cv::destroyWindow("Progress");
 	return final_result;
 }

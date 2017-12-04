@@ -1,10 +1,14 @@
 #include "solver_yy.h"
 #include "viewer.h"
+#include "input_process.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 namespace yy {
-	void Solver::init(const vector<vector<int>> &mat, Viewer *viewer) {
+	void Solver::init(const vector<vector<int>> &mat, Input *input, Viewer *viewer) {
 		if (inited) return;
-		if (viewer) this->viewer = viewer;
+		this->viewer = viewer;
+		this->input = input;
 		sols.clear();
 		h = make_shared<ColumnObject>();
 		all_nodes.push_back(h);
@@ -112,7 +116,7 @@ namespace yy {
 			}
 			cout << endl;
 			const auto &rows = path2rows(path);
-			if (this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 0);
+			if (this->viewer && show_details) this->viewer->update(path2rows(path), 0, this->input->row2position);
 			sols.push_back(rows);
 			sol++;
 			return;
@@ -132,7 +136,7 @@ namespace yy {
 		coverCol(cand_c);
 		for (auto r = cand_c->d.lock(); r != cand_c; r = r->d.lock()) {
 			path.push_back(r);
-			if(this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 30);
+			if(this->viewer && show_details) this->viewer->update(path2rows(path), 30, this->input->row2position);
 			for (auto j = r->r.lock(); j != r; j = j->r.lock()) {
 				coverCol(j->c.lock());
 			}
@@ -141,20 +145,22 @@ namespace yy {
 				uncoverCol(j->c.lock());
 			}
 			path.pop_back();
-			if (this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 30);
+			if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, this->input->row2position);
 		}
 		uncoverCol(cand_c);
 	}
 
 	void Solver::solve(int num_of_sol) {
+		if (show_details) cv::namedWindow("Progress", cv::WINDOW_AUTOSIZE);
 		if (!inited) {
 			cerr << "Please init first" << endl;
 			return;
 		}
-		if (this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 30);
+		if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, this->input->row2position);
 		int sol = 0;
 		max_sol = num_of_sol;
 		search(sol);
+		if (show_details) cv::destroyWindow("Progress");
 	}
 
 	const vector<vector<int>>&Solver::getSols()

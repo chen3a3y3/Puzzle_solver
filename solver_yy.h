@@ -9,6 +9,7 @@
 using namespace std;
 
 class Viewer;
+class Input;
 class Object {
 public:
 	weak_ptr<Object> l, r, u, d, c;
@@ -40,6 +41,7 @@ namespace yy {
 		bool inited = false;
 		void search(int &sol, int k = 0);
 		Viewer *viewer = nullptr;
+		Input *input = nullptr;
 		int max_sol = 0;
 		vector<int> path2rows(const vector<shared_ptr<Object>> &);
 		vector<vector<int>> rows2map(const vector<int> &);
@@ -47,7 +49,7 @@ namespace yy {
 	public:
 		bool show_details = false;
 		const vector<vector<int>>&getSols();
-		void init(const vector<vector<int>> &mat, Viewer *viewer);
+		void init(const vector<vector<int>> &mat, Input *input, Viewer *viewer);
 		void solve(int num_of_sol);
 	};
 }

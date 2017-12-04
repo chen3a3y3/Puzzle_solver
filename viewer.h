@@ -19,8 +19,5 @@ class Viewer {
 public:
 	Viewer(int x, int y) : res_x(x), res_y(y) {}
 	void init(int types, int rows, int cols);
-	void update(const vector<vector<int> > &sol, int ms);
-#ifdef AC2ME
-	void update(vector<int> &sol, int ms, unordered_map<int, position_set>*);
-#endif
+	void update(const vector<int> &sol, int ms, unordered_map<int, position_set>*);
 };

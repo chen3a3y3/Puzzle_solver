@@ -1,5 +1,6 @@
 #include "QtAlgorithmX.h"
 #include <iostream>
+#include <fstream>
 #ifdef AC2ME
 #include "solver.h"
 #include "viewer.h"
@@ -27,6 +28,8 @@ void QtAlgorithmX::onButtonClicked()
 
 void QtAlgorithmX::onFileSelected(QString qs) {
 	std::string file = qs.toLocal8Bit().constData();
+	std::ifstream infile(file);
+	if (!infile.good()) return;
 	vector<vector<int>> test;
 	Input input = Input();
 	input.input_process(file, test, true);
@@ -48,7 +51,7 @@ void QtAlgorithmX::onFileSelected(QString qs) {
 
 	yy::Solver solver;
 	solver.show_details = ui.radioButton->isChecked();
-	solver.init(test, &viewer);
+	solver.init(test, &input, &viewer);
 	solver.solve(1000000);
 
 	const auto &sol = solver.getSols();
