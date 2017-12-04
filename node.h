@@ -10,6 +10,8 @@ private:
 	Node* right = nullptr;
 	Node* up = nullptr;
 	Node* down = nullptr;
+	Node* C = nullptr;
+	int count = -1;
 	int row_index;
 	int col_index;
 	bool is_head;

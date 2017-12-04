@@ -9,6 +9,8 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 	Node* cur = head;
 	for (int i = 0; i < col; i++) {
 		Node* node = new Node(-1, i, true);
+		node->C = node;
+		node->count = 0;
 		cur->right = node;
 		node->left = cur;
 		cur = node;
@@ -34,6 +36,9 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 			Node* upper_node = assist->go_to_end();
 			upper_node->down = node;
 			node->up = upper_node;
+
+			assist->count++;
+			node->C = assist;
 		}
 		if (first_node != nullptr) {
 			cur->right = first_node;
@@ -115,7 +120,18 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 		final_result.push_back(result);
 		return;
 	}
-	Node* next_to_head = find_next(head, "right");
+
+	int min_count = INT_MAX;
+	Node* _cur = head;
+	Node* next_to_head = nullptr;
+	for (int i = 0; i < col; i++) {
+		_cur = _cur->right;
+		if (_cur->p_mark > 0 || _cur->o_mark > 0) continue;
+		if (_cur->count < min_count) {
+			next_to_head = _cur;
+			min_count = _cur->count;
+		}
+	}
 	if (find_next(next_to_head, "down") == next_to_head) {
 		return;
 	}
@@ -135,7 +151,6 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 			cur_2->p_mark = steps;
 			p_set.push_back(cur_2);
 			cur_2 = find_next(cur_2, "right");
-
 		}
 		cur->p_mark = steps;
 		p_set.push_back(cur);
@@ -172,16 +187,19 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 					Node* hori_iter = ver_iter->right;
 					while (hori_iter != ver_iter) {
 						if (hori_iter->p_mark == 0 && hori_iter->o_mark == 0) {
+							hori_iter->C->count--;
 							hori_iter->o_mark = steps;
 							o_set.push_back(hori_iter);
 						}
 						hori_iter = hori_iter->right;
 					}
 				}
+				ver_iter->C->count--;
 				ver_iter->o_mark = steps;
 				o_set.push_back(ver_iter);
 				ver_iter = ver_iter->down;
 			}
+			cur2->C->count--;
 			cur2 = cur2->right;
 		}
 
@@ -194,6 +212,7 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 			viewer->update(result, 30, this->input->row2position);
 		}
 		for (Node* o : o_set) {
+			o->C->count++;
 			o->o_mark = 0;
 		}
 		o_set.clear();
