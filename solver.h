@@ -1,51 +1,39 @@
 #pragma once
+#include <iostream>
+#include <algorithm>
 #include <vector>
 #include <string>
-#include <memory>
-#include <limits>
-#include <iostream>
-#include <chrono>
-#include <thread>
+#include <stack>
+#include <queue>
+#include "node.h"
+
+
 using namespace std;
 
+class Input;
 class Viewer;
-class Object {
-public:
-	weak_ptr<Object> l, r, u, d, c;
-};
-
-class DataObject : public Object {
-public:
-	int r_idx;
-};
-
-class ColumnObject : public Object {
-public:
-	int s;
-	string name;
-};
-
 class Solver {
-	vector<vector<int>> map;
-	shared_ptr<ColumnObject> h;
-	// for maintaining strong reference
-	vector<shared_ptr<Object>> all_nodes;
-	// for solution printing
-	vector<shared_ptr<Object>> path;
-	// r_idx sols
-	vector<vector<int>> sols;
-	void coverCol(const shared_ptr<Object> &c);
-	void uncoverCol(const shared_ptr<Object> &c);
-	bool inited = false;
-	void search(int &sol, int k = 0);
+private:
+	int row;
+	int col;
+	Node* head = new Node(-1, -1, true);
+	vector<vector<int>> final_result;
+	Input *input = nullptr;
 	Viewer *viewer = nullptr;
-	int max_sol = 0;
-	vector<int> path2rows(const vector<shared_ptr<Object>> &);
-	vector<vector<int>> rows2map(const vector<int> &);
-
+	
 public:
-	bool show_details = false;
-	const vector<vector<int>>&getSols();
-	void init(const vector<vector<int>> &mat, Viewer *viewer);
-	void solve(int num_of_sol);
+	bool show_details = true;
+	Solver(int row, int col, Input *inp, Viewer *viewer) {
+		this->row = row;
+		this->col = col;
+		this->input = inp;
+		this->viewer = viewer;
+	}
+	vector<vector<int>> solve(vector<vector<int>>& input, Input& in);
+	void create_link_table(vector<vector<int>>& input);
+	void dlx(vector<vector<int>>& input, vector<int>& result, int steps, Input& in);
+	void remove_link(Node* node, string mode);
+	Node* find_next(Node* node, string mode);
 };
+
+

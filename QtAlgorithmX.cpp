@@ -1,9 +1,16 @@
 #include "QtAlgorithmX.h"
-#include "input_process.hpp"
 #include <iostream>
+#ifdef AC2ME
 #include "solver.h"
-// #include "solver.hpp"
 #include "viewer.h"
+#include "input_process.h"
+#else
+#include "solver_yy.h"
+#include "viewer.h"
+#include "input_process.h"
+#endif // AC2ME
+
+
 
 QtAlgorithmX::QtAlgorithmX(QWidget *parent)
 	: QMainWindow(parent)
@@ -30,7 +37,16 @@ void QtAlgorithmX::onFileSelected(QString qs) {
 	Viewer viewer(c * 60, r * 60);
 	viewer.init(num, r, c);
 
-	Solver solver;
+#ifdef AC2ME
+	Solver S = Solver(test.size(), test[0].size(), &input, &viewer);
+	S.show_details = ui.radioButton->isChecked();
+	vector<vector<int>> result = S.solve(test, input);
+	QString s = QString::number(result.size());
+	emit answerGot(s);
+#else
+	
+
+	yy::Solver solver;
 	solver.show_details = ui.radioButton->isChecked();
 	solver.init(test, &viewer);
 	solver.solve(1000000);
@@ -38,9 +54,5 @@ void QtAlgorithmX::onFileSelected(QString qs) {
 	const auto &sol = solver.getSols();
 	QString s = QString::number(sol.size());
 	emit answerGot(s);
-
-	/*Solver S = Solver(test.size(), test[0].size());
-	vector<vector<int>> result = S.solve(test, input);
-	QString s = QString::number(result.size());
-	emit answerGot(s);*/
+#endif
 }

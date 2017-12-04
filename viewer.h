@@ -1,9 +1,13 @@
 #pragma once
-#include "solver.h"
 #include <unordered_map>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#ifndef AC2ME
+#include "solver_yy.h"
+#endif
+using namespace std;
 
+class position_set;
 class Viewer {
 	int n_types;
 	int nrows, ncols;
@@ -16,4 +20,7 @@ public:
 	Viewer(int x, int y) : res_x(x), res_y(y) {}
 	void init(int types, int rows, int cols);
 	void update(const vector<vector<int> > &sol, int ms);
+#ifdef AC2ME
+	void update(vector<int> &sol, int ms, unordered_map<int, position_set>*);
+#endif
 };

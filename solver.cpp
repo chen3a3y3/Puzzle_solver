@@ -1,178 +1,211 @@
 #include "solver.h"
 #include "viewer.h"
+#include "input_process.h"
 
-void Solver::init(const vector<vector<int>> &mat, Viewer *viewer) {
-	if (inited) return;
-	if (viewer) this->viewer = viewer;
-	sols.clear();
-	h = make_shared<ColumnObject>();
-	all_nodes.push_back(h);
-	int rows = mat.size();
-	if (rows == 0) return;
-	int cols = mat[0].size();
-	if (cols == 0) return;
-	map = mat;
-
-	vector<shared_ptr<Object>> rows_obj(rows, nullptr);
-
-	auto iter_c = h;
-	for (int i = 0; i < cols; i++) {
-		auto c = make_shared<ColumnObject>();
-		all_nodes.push_back(c);
-		iter_c->r = c;
-		c->l = iter_c;
-		c->c = c;
-
-		int one_cnt = 0;
-		shared_ptr<Object> iter_r = c;
-		for (int j = 0; j < rows; j++) {
-			if (mat[j][i]) {
-				one_cnt++;
-				auto r = make_shared<DataObject>();
-				all_nodes.push_back(r);
-				iter_r->d = r;
-				r->u = iter_r;
-				r->c = c;
-				r->r_idx = j;
-
-				iter_r = r;
-
-				if (!rows_obj[j]) {
-					rows_obj[j] = r;
-					r->r = r;
-					r->l = r;
-				}
-				else {
-					rows_obj[j]->r.lock()->l = r;
-					r->r = rows_obj[j]->r;
-					rows_obj[j]->r = r;
-					r->l = rows_obj[j];
-					rows_obj[j] = r;
-				}
-			}
-		}
-		iter_r->d = c;
-		c->u = iter_r;
-		c->s = one_cnt;
-		char name[128];
-		sprintf_s(name, 128, "Col %d", i);
-		c->name = name;
-
-		iter_c = c;
+void Solver::create_link_table(vector<vector<int>>& input) {
+	// create assistant node
+	Node* cur = head;
+	for (int i = 0; i < col; i++) {
+		Node* node = new Node(-1, i, true);
+		cur->right = node;
+		node->left = cur;
+		cur = node;
 	}
-	iter_c->r = h;
-	h->l = iter_c;
+	cur->right = head;
+	head->left = cur;
 
-	inited = true;
-}
+	// create link table
+	for (int i = 0; i < row; i++) {
+		Node* cur = nullptr;
+		Node* first_node = nullptr;
+		int count = 0;
+		for (int j = 0; j < col; j++) {
+			if (input[i][j] == 0) continue;
+			Node* node = new Node(i, j, false);
+			if (count == 0) first_node = node;
+			count++;
+			node->left = cur;
+			if (cur != nullptr) cur->right = node;
+			cur = node;
 
-void Solver::coverCol(const shared_ptr<Object> &c) {
-	c->l.lock()->r = c->r;
-	c->r.lock()->l = c->l;
-
-	auto i = c->d.lock();
-	while (i != c) {
-		auto j = i->r.lock();
-		while (j != i) {
-			j->u.lock()->d = j->d;
-			j->d.lock()->u = j->u;
-			static_pointer_cast<ColumnObject>(j->c.lock())->s -= 1;
-
-			j = j->r.lock();
+			Node* assist = head->move_node("right", j + 1);
+			Node* upper_node = assist->go_to_end();
+			upper_node->down = node;
+			node->up = upper_node;
 		}
-		i = i->d.lock();
+		if (first_node != nullptr) {
+			cur->right = first_node;
+			first_node->left = cur;
+		}
+	}
+
+	// set the link list is vertical circulatory
+	for (int i = 0; i < col; i++) {
+		Node* assist = head->move_node("right", i + 1);
+		Node* last = assist->go_to_end();
+		last->down = assist;
+		assist->up = last;
 	}
 }
 
-void Solver::uncoverCol(const shared_ptr<Object> &c) {
-	auto i = c->u.lock();
-	while (i != c) {
-		auto j = i->l.lock();
-		while (j != i) {
-			static_pointer_cast<ColumnObject>(j->c.lock())->s += 1;
-			j->d.lock()->u = j;
-			j->u.lock()->d = j;
 
-			j = j->l.lock();
+Node* Solver::find_next(Node* node, string mode) {
+	Node* cur = nullptr;
+	if (mode == "right") {
+		cur = node->right;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->right;
 		}
-		i = i->u.lock();
 	}
-
-	c->r.lock()->l = c;
-	c->l.lock()->r = c;
+	else if (mode == "left") {
+		cur = node->left;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->left;
+		}
+	}
+	else if (mode == "up") {
+		cur = node->up;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->up;
+		}
+	}
+	else if (mode == "down") {
+		cur = node->down;
+		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
+			cur = cur->down;
+		}
+	}
+	return cur;
 }
 
-void Solver::search(int &sol, int k) {
-	if (h->r.lock() == h) {
-		// print solution
-		cout << "found one solution: ";
-		for (size_t i = 0; i < path.size(); i++) {
-			cout << static_pointer_cast<DataObject>(path[i])->r_idx << ", ";
+
+void Solver::remove_link(Node* node, string mode) {
+	// v = vertical; h = horizontal
+	if (mode == "v") {
+		Node* cur = node;
+		do {
+			cur->left->right = cur->right;
+			cur->right->left = cur->left;
+			cur = cur->down;
+		} while (cur != node);
+	}
+	else if (mode == "h") {
+		Node* cur = node;
+		do {
+			cur->up->down = cur->down;
+			cur->down->up = cur->up;
+			cur = cur->right;
+		} while (cur != node);
+	}
+}
+
+
+void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Input& in) {
+	if (find_next(head, "right") == head) {
+		if (this->input && this->viewer && show_details) {
+			viewer->update(result, 0, this->input->row2position);
+		}
+		for (auto j : result) {
+			position_set r = (*in.row2position)[j];
+			cout << r.index << " " << r.offset.first << " " << r.offset.second << endl;
 		}
 		cout << endl;
-		const auto &rows = path2rows(path);
-		if (this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 0);
-		sols.push_back(rows);
-		sol++;
+		final_result.push_back(result);
 		return;
 	}
-	if (sol >= max_sol) return;
-
-	int min_cnt = std::numeric_limits<int>::max();
-	shared_ptr<ColumnObject> cand_c;
-	for (auto r = h->r.lock(); r != h;  r = r->r.lock()) {
-		auto c = static_pointer_cast<ColumnObject>(r);
-		int cnt = c->s;
-		if (cnt < min_cnt) {
-			min_cnt = cnt;
-			cand_c = c;
-		}
-	}
-	coverCol(cand_c);
-	for (auto r = cand_c->d.lock(); r != cand_c; r = r->d.lock()) {
-		path.push_back(r);
-		if(this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 30);
-		for (auto j = r->r.lock(); j != r; j = j->r.lock()) {
-			coverCol(j->c.lock());
-		}
-		search(sol, k + 1);
-		for (auto j = r->l.lock(); j != r; j = j->l.lock()) {
-			uncoverCol(j->c.lock());
-		}
-		path.pop_back();
-		if (this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 30);
-	}
-	uncoverCol(cand_c);
-}
-
-void Solver::solve(int num_of_sol) {
-	if (!inited) {
-		cerr << "Please init first" << endl;
+	Node* next_to_head = find_next(head, "right");
+	if (find_next(next_to_head, "down") == next_to_head) {
 		return;
 	}
-	if (this->viewer && show_details) this->viewer->update(rows2map(path2rows(path)), 30);
-	int sol = 0;
-	max_sol = num_of_sol;
-	search(sol);
+
+	// 插紫色点的合集，用于恢复
+	vector<Node*> p_set;
+
+	// next_to_head is C1， cur is 4
+	Node* cur = find_next(next_to_head, "down");
+	queue<Node*> node_queue;
+	while (cur != next_to_head) {
+		node_queue.push(cur);
+		// cur_2 is 5
+		// 把 4,10 一整行都弄成紫色
+		Node* cur_2 = find_next(cur, "right");
+		while (cur_2 != cur) {
+			cur_2->p_mark = steps;
+			p_set.push_back(cur_2);
+			cur_2 = find_next(cur_2, "right");
+
+		}
+		cur->p_mark = steps;
+		p_set.push_back(cur);
+		cur = find_next(cur, "down");
+	}
+	next_to_head->p_mark = steps;
+	p_set.push_back(next_to_head);
+
+	while (!node_queue.empty()) {
+		// 插橙色的点，用于恢复
+		vector<Node*> o_set;
+
+		// critical_node is 4
+		Node* critical_node = node_queue.front();
+		node_queue.pop();
+		result.push_back(critical_node->row_index);
+		if (this->input && this->viewer && show_details) {
+			viewer->update(result, 30, this->input->row2position);
+		}
+
+		// cur2 is 5
+		Node* cur2 = critical_node->right;
+		while (cur2 != critical_node) {
+			// 把5一整列弄成橙色
+			Node* ver_iter = cur2->down;
+			while (ver_iter != cur2) {
+				if (ver_iter->o_mark != 0 || ver_iter->p_mark != 0) {
+					ver_iter = ver_iter->down;
+					continue;
+				}
+				if (!ver_iter->is_head) {
+					//把经过的节点的横行弄成橙色
+					// hori_iter is 14
+					Node* hori_iter = ver_iter->right;
+					while (hori_iter != ver_iter) {
+						if (hori_iter->p_mark == 0 && hori_iter->o_mark == 0) {
+							hori_iter->o_mark = steps;
+							o_set.push_back(hori_iter);
+						}
+						hori_iter = hori_iter->right;
+					}
+				}
+				ver_iter->o_mark = steps;
+				o_set.push_back(ver_iter);
+				ver_iter = ver_iter->down;
+			}
+			cur2 = cur2->right;
+		}
+
+		// 开始递归调用
+		dlx(input, result, steps + 1, in);
+
+		// 开始恢复橙色的点
+		result.pop_back();
+		if (this->input && this->viewer && show_details) {
+			viewer->update(result, 30, this->input->row2position);
+		}
+		for (Node* o : o_set) {
+			o->o_mark = 0;
+		}
+		o_set.clear();
+	}
+
+	//开始恢复紫色的点
+	for (Node* p : p_set) {
+		p->p_mark = 0;
+	}
 }
 
-const vector<vector<int>>&Solver::getSols()
-{
-	return sols;
-}
-
-vector<int> Solver::path2rows(const vector<shared_ptr<Object>> &p) {
+vector<vector<int>> Solver::solve(vector<vector<int>>& input, Input& in) {
+	create_link_table(input);
 	vector<int> result;
-	for (size_t i = 0; i < p.size(); i++) {
-		result.push_back(static_pointer_cast<DataObject>(p[i])->r_idx);
-	}
-	return result;
-}
-
-vector<vector<int>> Solver::rows2map(const vector<int> &rows) {
-	vector<vector<int>> patt;
-	for (int i = 0; i < rows.size(); i++) {
-		patt.push_back(map[rows[i]]);
-	}
-	return patt;
+	dlx(input, result, 1, in);
+	return final_result;
 }
