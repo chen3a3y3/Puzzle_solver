@@ -9,6 +9,13 @@
 
 using namespace std;
 
+typedef struct position_set {
+	Tile* tile;
+	pair<int, int> offset;
+	int index = 0;
+} position_set;
+
+
 class Input {
 private:
 	struct hash_func {
@@ -21,16 +28,17 @@ private:
 			return (p1.first == p2.first && p1.second == p2.second);
 		}
 	};
-	int tile_number = 0;
 	unordered_map<pair<int, int>, char, hash_func, cmp_func> index2value;
 	unordered_map<pair<int, int>, int, hash_func, cmp_func> position2col;
 public:
+	
+	int tile_number = 0;
 	vector<Tile*> tile_set;
-	unordered_map<int, vector<int>>* row2position;
+	unordered_map<int, position_set>* row2position;
 	
 	Tile* board = nullptr;
 	Input() {
-		row2position = new unordered_map<int, vector<int>>;
+		row2position = new unordered_map<int, position_set>;
 	};
 	~Input() {
 		for (Tile* t : tile_set) {
@@ -273,10 +281,10 @@ void Input::input_process(string path, vector<vector<int>>& input, bool f_and_r)
 						temp[col_index] = 1;
 					}
 
-					vector<int> position(3, 0);
-					position[0] = cur->index;
-					position[1] = i;
-					position[2] = j;
+					position_set position;
+					position.index = cur->index;
+					position.offset = make_pair(i, j);
+					position.tile = cur;
 					(*row2position)[row_index] = position;
 					input.push_back(temp);
 					row_index++;

@@ -20,16 +20,17 @@ int main() {
 	//	cout << endl;
 	//}
 	Solver S = Solver(test.size(), test[0].size());
-	vector<vector<int>> result = S.solve(test);
-	//cout << endl;
-	//for (auto i : result) {
-	//	for (auto j : i) {
-	//		vector<int> r = (*input.row2position)[j];
-	//		cout << r[0] << r[1] << r[2] << endl;
-	//	}
-	//	cout << endl;
-	//}
-	//system("pause");
+	vector<vector<int>> result = S.solve(test, input);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+	cout << endl;
+	for (auto i : result) {
+		for (auto j : i) {
+			position_set r = (*input.row2position)[j];
+			cout << r.index << " " << r.offset.first << " " << r.offset.second << endl;
+		}
+		cout << endl;
+	}
+	cout << "The number of solution is:" << result.size() << endl;
+	system("pause");
 	
 	return 0;
 }

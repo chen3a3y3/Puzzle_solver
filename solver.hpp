@@ -6,6 +6,7 @@
 #include <stack>
 #include <queue>
 #include "node.hpp"
+#include "input_process.hpp"
 using namespace std;
 
 class Solver {
@@ -19,9 +20,9 @@ public:
 		this->row = row;
 		this->col = col;
 	}
-	vector<vector<int>> solve(vector<vector<int>>& input);
+	vector<vector<int>> solve(vector<vector<int>>& input, Input& in);
 	void create_link_table(vector<vector<int>>& input);
-	void dlx(vector<vector<int>>& input, vector<int>& result, int steps);
+	void dlx(vector<vector<int>>& input, vector<int>& result, int steps, Input& in);
 	void remove_link(Node* node, string mode);
 	Node* find_next(Node* node, string mode);
 };
@@ -125,9 +126,13 @@ void Solver::remove_link(Node* node, string mode) {
 }
 
 
-void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
+void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Input& in) {
 	if (find_next(head, "right") == head) {
-		for (auto i : result) cout << i << " ";
+
+		for (auto j : result) {
+			position_set r = (*in.row2position)[j];
+			cout << r.index << " " << r.offset.first << " " << r.offset.second << endl;
+		}
 		cout << endl;
 		final_result.push_back(result);
 		return;
@@ -200,7 +205,7 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
 		}
 		
 		// 开始递归调用
-		dlx(input, result, steps + 1);
+		dlx(input, result, steps + 1, in);
 
 		// 开始恢复橙色的点
 		result.pop_back();
@@ -216,10 +221,10 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
 	}
 }
 
-vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
+vector<vector<int>> Solver::solve(vector<vector<int>>& input, Input& in) {
 	create_link_table(input);
 	vector<int> result;
-	dlx(input, result, 1);
+	dlx(input, result, 1, in);
 	return final_result;
 }
 
