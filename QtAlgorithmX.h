@@ -13,10 +13,14 @@ public:
 public slots:
 	void onButtonClicked();
 	void onFileSelected(QString);
+	void on_startButton_clicked();
 signals:
 	void fileSelected(QString);
 	void answerGot(QString);
 
 private:
+	std::string selected_file;
+	int desktop_width;
+	int desktop_height;
 	Ui::QtAlgorithmXClass ui;
 };
