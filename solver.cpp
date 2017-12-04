@@ -107,13 +107,13 @@ void Solver::remove_link(Node* node, string mode) {
 }
 
 
-void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Input& in) {
+void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
 	if (find_next(head, "right") == head) {
-		if (this->input && this->viewer && show_details) {
-			viewer->update(result, 0, this->input->row2position);
+		if (this->viewer && show_details) {
+			viewer->update(result, 0, &this->row2pos);
 		}
 		for (auto j : result) {
-			position_set r = (*in.row2position)[j];
+			position_set r = this->row2pos[j];
 			cout << r.index << " " << r.offset.first << " " << r.offset.second << endl;
 		}
 		cout << endl;
@@ -167,8 +167,8 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 		Node* critical_node = node_queue.front();
 		node_queue.pop();
 		result.push_back(critical_node->row_index);
-		if (this->input && this->viewer && show_details) {
-			viewer->update(result, 30, this->input->row2position);
+		if (this->viewer && show_details) {
+			viewer->update(result, 30, &this->row2pos);
 		}
 
 		// cur2 is 5
@@ -204,12 +204,12 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 		}
 
 		// 开始递归调用
-		dlx(input, result, steps + 1, in);
+		dlx(input, result, steps + 1);
 
 		// 开始恢复橙色的点
 		result.pop_back();
-		if (this->input && this->viewer && show_details) {
-			viewer->update(result, 30, this->input->row2position);
+		if (this->viewer && show_details) {
+			viewer->update(result, 30, &this->row2pos);
 		}
 		for (Node* o : o_set) {
 			o->C->count++;
@@ -224,11 +224,11 @@ void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps, Inp
 	}
 }
 
-vector<vector<int>> Solver::solve(vector<vector<int>>& input, Input& in) {
+vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	if (show_details) cv::namedWindow("Progress", cv::WINDOW_AUTOSIZE);
 	create_link_table(input);
 	vector<int> result;
-	dlx(input, result, 1, in);
+	dlx(input, result, 1);
 	if (show_details) cv::destroyWindow("Progress");
 	return final_result;
 }

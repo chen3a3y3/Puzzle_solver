@@ -5,10 +5,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 namespace yy {
-	void Solver::init(const vector<vector<int>> &mat, Input *input, Viewer *viewer) {
+	void Solver::init(const vector<vector<int>> &mat, const unordered_map<int, position_set> &row2pos, Viewer *viewer) {
 		if (inited) return;
 		this->viewer = viewer;
-		this->input = input;
+		this->row2pos = row2pos;
 		sols.clear();
 		h = make_shared<ColumnObject>();
 		all_nodes.push_back(h);
@@ -116,7 +116,7 @@ namespace yy {
 			}
 			cout << endl;
 			const auto &rows = path2rows(path);
-			if (this->viewer && show_details) this->viewer->update(path2rows(path), 0, this->input->row2position);
+			if (this->viewer && show_details) this->viewer->update(path2rows(path), 0, &this->row2pos);
 			sols.push_back(rows);
 			sol++;
 			return;
@@ -136,7 +136,7 @@ namespace yy {
 		coverCol(cand_c);
 		for (auto r = cand_c->d.lock(); r != cand_c; r = r->d.lock()) {
 			path.push_back(r);
-			if(this->viewer && show_details) this->viewer->update(path2rows(path), 30, this->input->row2position);
+			if(this->viewer && show_details) this->viewer->update(path2rows(path), 30, &this->row2pos);
 			for (auto j = r->r.lock(); j != r; j = j->r.lock()) {
 				coverCol(j->c.lock());
 			}
@@ -145,7 +145,7 @@ namespace yy {
 				uncoverCol(j->c.lock());
 			}
 			path.pop_back();
-			if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, this->input->row2position);
+			if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, &this->row2pos);
 		}
 		uncoverCol(cand_c);
 	}
@@ -156,7 +156,7 @@ namespace yy {
 			cerr << "Please init first" << endl;
 			return;
 		}
-		if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, this->input->row2position);
+		if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, &this->row2pos);
 		int sol = 0;
 		max_sol = num_of_sol;
 		search(sol);
