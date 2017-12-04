@@ -39,10 +39,10 @@ void QtAlgorithmX::onButtonClicked()
 void QtAlgorithmX::on_startButton_clicked() {
 	std::ifstream infile(selected_file);
 	if (!infile.good()) return;
-	vector<vector<int>> test;
+	vector<vector<vector<int>>> test;
 	Input input = Input();
-	input.input_process(selected_file, test, true);
-	int num = input.tile_number;
+	if (!input.input_process(selected_file, test, true)) return;
+	int num = input.total_tile_number;
 	int c = input.board->right + 1;
 	int r = input.board->down + 1;
 
@@ -50,22 +50,28 @@ void QtAlgorithmX::on_startButton_clicked() {
 	viewer.init(num, r, c);
 
 #ifdef AC2ME
-	Solver S = Solver(test.size(), test[0].size(), &input, &viewer);
-	S.show_details = ui.radioButton->isChecked();
-	vector<vector<int>> result = S.solve(test, input);
-	QString s = QString::number(result.size());
-	emit answerGot(s);
+	int i = 0;
+	for (auto &single: test) {
+		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer);
+		S.show_details = ui.radioButton->isChecked();
+		vector<vector<int>> result = S.solve(single);
+		QString s = QString::number(result.size());
+		emit answerGot(s);
+	}
 #else
 
+	int i = 0;
+	for (const auto &single : test) {
+		yy::Solver solver;
+		solver.show_details = ui.radioButton->isChecked();
+		solver.init(single, input.row2positions[i++], &viewer);
+		solver.solve(1000000);
 
-	yy::Solver solver;
-	solver.show_details = ui.radioButton->isChecked();
-	solver.init(test, &input, &viewer);
-	solver.solve(1000000);
-
-	const auto &sol = solver.getSols();
-	QString s = QString::number(sol.size());
-	emit answerGot(s);
+		const auto &sol = solver.getSols();
+		QString s = QString::number(sol.size());
+		emit answerGot(s);
+	}
+	
 #endif
 }
 
