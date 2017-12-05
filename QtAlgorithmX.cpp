@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include <future>
 #ifdef AC2ME
 #include "solver.h"
 #include "viewer.h"
@@ -58,12 +59,12 @@ void QtAlgorithmX::on_startButton_clicked() {
 	beginTime = clock();
 	std::ifstream infile(selected_file);
 	if (!infile.good()) return;
-	vector<vector<vector<int>>> test;
-	Input input = Input();
-	if (!input.input_process(selected_file, test, ui.frBox->isChecked())) return;
-	int num = input.total_tile_number;
-	int c = input.board->right + 1;
-	int r = input.board->down + 1;
+	auto test = make_shared<vector<vector<vector<int>>>>();
+	auto input = make_shared<Input>();
+	if (!input->input_process(selected_file, *test, ui.frBox->isChecked())) return;
+	int num = input->total_tile_number;
+	int c = input->board->right + 1;
+	int r = input->board->down + 1;
 
 	Viewer viewer(c * desktop_height / 20, r * desktop_height / 20);
 	viewer.init(num, input.board);
