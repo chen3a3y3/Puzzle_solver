@@ -11,9 +11,13 @@
 
 using namespace std;
 
+
+
+
 class position_set;
 class Viewer;
 class Input;
+class QtAlgorithmX;
 class Solver {
 private:
 	int row;
@@ -25,6 +29,7 @@ private:
 	vector<vector<vector<int>>*>* solution_set;
 	Input *input = nullptr;
 public:
+	QtAlgorithmX *qt = nullptr;
 	bool show_details = true;
 	Solver(int row, int col, const unordered_map<int, position_set> &row2pos, Viewer *viewer, Input *input) {
 		this->row = row;

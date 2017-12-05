@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1115</width>
-    <height>859</height>
+    <width>1479</width>
+    <height>1142</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -47,18 +47,6 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1" alignment="Qt::AlignVCenter">
-       <widget class="QPushButton" name="startButton">
-        <property name="font">
-         <font>
-          <pointsize>13</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Start</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="0">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -68,8 +56,26 @@
             <pointsize>13</pointsize>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: red</string>
+          </property>
           <property name="text">
-           <string>show details</string>
+           <string>show solution only</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="singleBox">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: red</string>
+          </property>
+          <property name="text">
+           <string>single step</string>
           </property>
          </widget>
         </item>
@@ -79,6 +85,9 @@
            <font>
             <pointsize>13</pointsize>
            </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: red</string>
           </property>
           <property name="text">
            <string>flip and rotate</string>
@@ -97,19 +106,22 @@
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
-            <verstretch>10</verstretch>
+            <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>30</height>
+            <height>16777215</height>
            </size>
           </property>
           <property name="font">
            <font>
             <pointsize>13</pointsize>
            </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: red</string>
           </property>
           <property name="text">
            <string>Total number of solutions:</string>
@@ -123,6 +135,9 @@
             <pointsize>13</pointsize>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: red</string>
+          </property>
           <property name="text">
            <string>Time to find the first solution:</string>
           </property>
@@ -135,12 +150,39 @@
             <pointsize>13</pointsize>
            </font>
           </property>
+          <property name="styleSheet">
+           <string notr="true">color: red</string>
+          </property>
           <property name="text">
            <string>Time to find all solutions:</string>
           </property>
          </widget>
         </item>
        </layout>
+      </item>
+      <item row="1" column="0" alignment="Qt::AlignVCenter">
+       <widget class="QPushButton" name="startButton">
+        <property name="font">
+         <font>
+          <pointsize>13</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" alignment="Qt::AlignVCenter">
+       <widget class="QPushButton" name="stopButton">
+        <property name="font">
+         <font>
+          <pointsize>13</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Stop</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -151,14 +193,15 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1115</width>
-     <height>31</height>
+     <width>1479</width>
+     <height>45</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStart_s">
     <property name="title">
      <string>Start(s)</string>
     </property>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuStart_s"/>
   </widget>
@@ -171,6 +214,11 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About...</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
@@ -239,11 +287,45 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>detailBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>QtAlgorithmXClass</receiver>
+   <slot>onDetailChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>377</x>
+     <y>815</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>739</x>
+     <y>570</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>singleBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>QtAlgorithmXClass</receiver>
+   <slot>onSingleChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>377</x>
+     <y>915</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>739</x>
+     <y>570</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <signal>fileSelected(QString)</signal>
   <signal>answerGot(QString)</signal>
   <slot>onButtonClicked()</slot>
   <slot>onFileSelected(QString)</slot>
+  <slot>onDetailChecked(bool)</slot>
+  <slot>onSingleChecked(bool)</slot>
  </slots>
 </ui>

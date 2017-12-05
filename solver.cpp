@@ -7,6 +7,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "QtAlgorithmX.h"
 
+long beginTime, firstEndTime, endTime;
+
 void Solver::create_link_table(vector<vector<int>>& input) {
 	// create assistant node
 	Node* cur = head;
@@ -172,12 +174,15 @@ bool Solver::check_is_valid_solution(vector<int>& result) {
 
 
 void Solver::dlx(vector<int>& result) {
+	if (qt->requestedStop) return;
 	if (head->right == head) {
 		if (check_is_valid_solution(result)) {
-			cout << result[0] << " ";
-		//if(true){
 			if (this->viewer && show_details) {
 				viewer->update(result, 0, &this->row2pos);
+			}
+			if (final_result.empty()) {
+				firstEndTime = clock();
+				updateFirstTime(firstEndTime - beginTime);
 			}
 			final_result.push_back(result);
 		}
@@ -199,6 +204,10 @@ void Solver::dlx(vector<int>& result) {
 	Node* cur = next_to_head->down;
 	while (cur != next_to_head) {
 		result.push_back(cur->row_index);
+		if (this->viewer && (show_details || qt->ui.singleBox->isChecked())) {
+			viewer->update(result, show_details ? 10 : 0, &this->row2pos);
+		}
+
 		// covering
 		for (auto j = cur->right; j != cur; j = j->right) {
 			covering(j->C);
@@ -210,8 +219,8 @@ void Solver::dlx(vector<int>& result) {
 		for (auto j = cur->left; j != cur; j = j->left) {
 			uncovering(j->C);
 		}
-		if (this->viewer && show_details) {
-			viewer->update(result, 10, &this->row2pos);
+		if (this->viewer && (show_details || qt->ui.singleBox->isChecked())) {
+			viewer->update(result, show_details ? 10 : 0, &this->row2pos);
 		}
 		cur = cur->down;
 	}
@@ -224,11 +233,7 @@ vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	if (show_details) cv::namedWindow("Progress", cv::WINDOW_AUTOSIZE);
 	create_link_table(input);
 	vector<int> result;
-	long begin_time = clock();
 	dlx(result);
-	long end_time = clock();
-	cout << end_time - begin_time << endl;
-	updateAllTime(end_time - begin_time);
 	if (show_details) cv::destroyWindow("Progress");
 	
 	return final_result;
