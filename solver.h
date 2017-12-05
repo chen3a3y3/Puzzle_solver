@@ -48,10 +48,10 @@ public:
 	void dlx(vector<int>& result);
 	void covering(Node* node, int index);
 	void uncovering(Node* node);
-	vector<vector<int>>* rotate_180(vector<vector<int>>* input);
+	void rotate_180(vector<vector<int>>* input, vector<vector<int>>& output);
 	bool check_is_valid_solution(vector<int>& result);
 	bool _compare(vector<vector<int>>& a, vector<vector<int>>& b);
-	vector<vector<int>>* rotate_90(vector<vector<int>>* input);
+	void rotate_90(vector<vector<int>>* input, vector<vector<int>>& output);
 };
 
 

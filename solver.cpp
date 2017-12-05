@@ -105,30 +105,24 @@ bool Solver::_compare(vector<vector<int>>& a, vector<vector<int>>& b) {
 }
 
 
-vector<vector<int>>* Solver::rotate_90(vector<vector<int>>* input) {
+void Solver::rotate_90(vector<vector<int>>* input, vector<vector<int>>& output) {
 	int row = (*input).size(), col = (*input)[0].size();
 	assert(row == col);
-
-	vector<vector<int>>* output = new vector<vector<int>>(row, vector<int>(col, -1));
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
-			(*output)[i][j] = (*input)[j][col - 1 - i];
+			output[i][j] = (*input)[j][col - 1 - i];
 		}
 	}
-	return output;
-
 }
 
 
-vector<vector<int>>* Solver::rotate_180(vector<vector<int>>* input) {
+void Solver::rotate_180(vector<vector<int>>* input, vector<vector<int>>& output) {
 	int row = (*input).size(), col = (*input)[0].size();
-	vector<vector<int>>* output = new vector<vector<int>>(row, vector<int>(col, -1));
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
-			(*output)[i][j] = (*input)[row - i - 1][col - j - 1];
+			output[i][j] = (*input)[row - i - 1][col - j - 1];
 		}
 	}
-	return output;
 }
 
 
@@ -144,24 +138,31 @@ bool Solver::check_is_valid_solution(vector<int>& result) {
 			(*this_solution)[p->row_index + pa.first][p->col_index + pa.second] = index;
 		}
 	}
+	vector<vector<vector<int>>> this_solution_set;
+	this_solution_set.push_back(*this_solution);
+	if (is_square) {
+		vector<vector<int>> output_1(input->board->down + 1, vector<int>(input->board->right + 1, -1));
+		vector<vector<int>> output_2(input->board->down + 1, vector<int>(input->board->right + 1, -1));
+		vector<vector<int>> output_3(input->board->down + 1, vector<int>(input->board->right + 1, -1));
+		rotate_90(this_solution, output_1);
+		rotate_180(this_solution, output_2);
+		rotate_90(&output_2, output_3);
+		this_solution_set.push_back(output_1);
+		this_solution_set.push_back(output_2);
+		this_solution_set.push_back(output_3);
+	}
+	else {
+		vector<vector<int>> output_1(input->board->down + 1, vector<int>(input->board->right + 1, -1));
+		rotate_180(this_solution, output_1);
+		this_solution_set.push_back(output_1);
+	}
 	for (auto solution : (*solution_set)) {
-		if (is_square) {
-			vector<vector<int>>* output_1 = rotate_90(this_solution);
-			vector<vector<int>>* output_2 = rotate_180(this_solution);
-			vector<vector<int>>* output_3 = rotate_90(output_2);
-			if (_compare(*solution, *this_solution) || _compare(*solution, *output_1) || _compare(*solution, *output_2) || _compare(*solution, *output_3)) {
-				delete this_solution, output_1, output_2, output_3;
+		for (auto a : this_solution_set) {
+			if (_compare(*solution, a)) {
+				delete this_solution;
+				this_solution = nullptr;
 				return false;
 			}
-			delete output_1, output_2, output_3;
-		}
-		else {
-			vector<vector<int>>* output_1 = rotate_180(this_solution);
-			if (_compare(*solution, *this_solution) || _compare(*solution, *output_1)) {
-				delete this_solution, output_1;
-				return false;
-			}
-			delete output_1;
 		}
 	}
 	(*solution_set).push_back(this_solution);
@@ -172,6 +173,8 @@ bool Solver::check_is_valid_solution(vector<int>& result) {
 void Solver::dlx(vector<int>& result) {
 	if (head->right == head) {
 		if (check_is_valid_solution(result)) {
+			cout << result[0] << " ";
+		//if(true){
 			if (this->viewer && show_details) {
 				viewer->update(result, 0, &this->row2pos);
 			}
