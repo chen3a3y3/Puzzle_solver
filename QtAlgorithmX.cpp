@@ -47,7 +47,7 @@ void QtAlgorithmX::on_startButton_clicked() {
 	int r = input.board->down + 1;
 
 	Viewer viewer(c * desktop_height / 20, r * desktop_height / 20);
-	viewer.init(num, r, c);
+	viewer.init(num, input.board);
 
 #ifdef AC2ME
 	int i = 0;
