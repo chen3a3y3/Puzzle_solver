@@ -51,13 +51,17 @@ void QtAlgorithmX::on_startButton_clicked() {
 
 #ifdef AC2ME
 	int i = 0;
+	int total_result = 0;
 	for (auto &single: test) {
 		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer);
 		S.show_details = ui.radioButton->isChecked();
 		vector<vector<int>> result = S.solve(single);
-		QString s = QString::number(result.size());
-		emit answerGot(s);
+		
+		total_result += result.size();
+		
 	}
+	QString s = QString::number(total_result);
+	emit answerGot(s);
 #else
 
 	int i = 0;

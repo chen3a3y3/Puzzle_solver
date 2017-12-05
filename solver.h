@@ -17,7 +17,7 @@ class Solver {
 private:
 	int row;
 	int col;
-	Node* head = new Node(-1, -1, true);
+	Node* head = new Node(-1, -1);
 	vector<vector<int>> final_result;
 	Viewer *viewer = nullptr;
 	unordered_map<int, position_set> row2pos;
@@ -32,9 +32,9 @@ public:
 	}
 	vector<vector<int>> solve(vector<vector<int>>& input);
 	void create_link_table(vector<vector<int>>& input);
-	void dlx(vector<vector<int>>& input, vector<int>& result, int steps);
-	void remove_link(Node* node, string mode);
-	Node* find_next(Node* node, string mode);
+	void dlx(vector<int>& result);
+	void covering(Node* node, int index);
+	void uncovering(Node* node);
 };
 
 

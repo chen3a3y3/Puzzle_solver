@@ -14,15 +14,11 @@ private:
 	int count = -1;
 	int row_index;
 	int col_index;
-	bool is_head;
-	int p_mark = 0;
-	int o_mark = 0;
 public:
 	friend class Solver;
-	Node(int row_index = -1, int col_index = -1, bool is_head = false) {
+	Node(int row_index = -1, int col_index = -1) {
 		this->row_index = row_index;
 		this->col_index = col_index;
-		this->is_head = is_head;
 	}; 
 
 	Node* move_node(string dir, int times);

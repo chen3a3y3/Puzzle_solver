@@ -40,7 +40,7 @@ namespace yy {
 		void coverCol(const shared_ptr<Object> &c);
 		void uncoverCol(const shared_ptr<Object> &c);
 		bool inited = false;
-		void search(int &sol, int k = 0);
+		void search(int &sol, long long int&, int k = 0);
 		Viewer *viewer = nullptr;
 		unordered_map<int, position_set> row2pos;
 		int max_sol = 0;

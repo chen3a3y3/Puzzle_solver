@@ -1,6 +1,8 @@
 #include "solver.h"
 #include "viewer.h"
 #include "input_process.h"
+#include <time.h>
+#include <assert.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -8,7 +10,7 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 	// create assistant node
 	Node* cur = head;
 	for (int i = 0; i < col; i++) {
-		Node* node = new Node(-1, i, true);
+		Node* node = new Node(-1, i);
 		node->C = node;
 		node->count = 0;
 		cur->right = node;
@@ -25,7 +27,7 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 		int count = 0;
 		for (int j = 0; j < col; j++) {
 			if (input[i][j] == 0) continue;
-			Node* node = new Node(i, j, false);
+			Node* node = new Node(i, j);
 			if (count == 0) first_node = node;
 			count++;
 			node->left = cur;
@@ -56,179 +58,93 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 }
 
 
-Node* Solver::find_next(Node* node, string mode) {
-	Node* cur = nullptr;
-	if (mode == "right") {
-		cur = node->right;
-		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
-			cur = cur->right;
+void Solver::uncovering(Node* node) {
+	Node* i = node->up;
+	while (i != node) {
+		Node* j = i->left;
+		while (j != i) {
+			j->C->count++;
+			j->down->up = j;
+			j->up->down = j;
+			j = j->left;
 		}
+		i = i->up;
 	}
-	else if (mode == "left") {
-		cur = node->left;
-		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
-			cur = cur->left;
-		}
-	}
-	else if (mode == "up") {
-		cur = node->up;
-		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
-			cur = cur->up;
-		}
-	}
-	else if (mode == "down") {
-		cur = node->down;
-		while ((cur->o_mark != 0 || cur->p_mark != 0) && cur != node) {
-			cur = cur->down;
-		}
-	}
-	return cur;
+	node->right->left = node;
+	node->left->right = node;
 }
 
 
-void Solver::remove_link(Node* node, string mode) {
-	// v = vertical; h = horizontal
-	if (mode == "v") {
-		Node* cur = node;
-		do {
-			cur->left->right = cur->right;
-			cur->right->left = cur->left;
-			cur = cur->down;
-		} while (cur != node);
-	}
-	else if (mode == "h") {
-		Node* cur = node;
-		do {
-			cur->up->down = cur->down;
-			cur->down->up = cur->up;
-			cur = cur->right;
-		} while (cur != node);
+void Solver::covering(Node* node, int index = INT_MAX) {
+	node->left->right = node->right;
+	node->right->left = node->left;
+	Node* i = node->down;
+	while (i != node) {
+		Node* j = i->right;
+		while (j != i) {
+			j->down->up = j->up;
+			j->up->down = j->down;
+			j->C->count--;
+			j = j->right;
+		}
+		i = i->down;
 	}
 }
 
 
-void Solver::dlx(vector<vector<int>>& input, vector<int>& result, int steps) {
-	if (find_next(head, "right") == head) {
+void Solver::dlx(vector<int>& result) {
+	if (head->right == head) {
 		if (this->viewer && show_details) {
 			viewer->update(result, 0, &this->row2pos);
 		}
-		for (auto j : result) {
-			position_set r = this->row2pos[j];
-			cout << r.index << " " << r.offset.first << " " << r.offset.second << endl;
-		}
-		cout << endl;
 		final_result.push_back(result);
 		return;
 	}
 
 	int min_count = INT_MAX;
-	Node* _cur = head;
+	Node* _cur = head->right;
 	Node* next_to_head = nullptr;
-	for (int i = 0; i < col; i++) {
-		_cur = _cur->right;
-		if (_cur->p_mark > 0 || _cur->o_mark > 0) continue;
+	while (_cur != head) {
 		if (_cur->count < min_count) {
-			next_to_head = _cur;
 			min_count = _cur->count;
+			next_to_head = _cur;
 		}
-	}
-	if (find_next(next_to_head, "down") == next_to_head) {
-		return;
+		_cur = _cur->right;
 	}
 
-	// 插紫色点的合集，用于恢复
-	vector<Node*> p_set;
-
-	// next_to_head is C1， cur is 4
-	Node* cur = find_next(next_to_head, "down");
-	queue<Node*> node_queue;
+	covering(next_to_head);
+	Node* cur = next_to_head->down;
 	while (cur != next_to_head) {
-		node_queue.push(cur);
-		// cur_2 is 5
-		// 把 4,10 一整行都弄成紫色
-		Node* cur_2 = find_next(cur, "right");
-		while (cur_2 != cur) {
-			cur_2->p_mark = steps;
-			p_set.push_back(cur_2);
-			cur_2 = find_next(cur_2, "right");
-		}
-		cur->p_mark = steps;
-		p_set.push_back(cur);
-		cur = find_next(cur, "down");
-	}
-	next_to_head->p_mark = steps;
-	p_set.push_back(next_to_head);
-
-	while (!node_queue.empty()) {
-		// 插橙色的点，用于恢复
-		vector<Node*> o_set;
-
-		// critical_node is 4
-		Node* critical_node = node_queue.front();
-		node_queue.pop();
-		result.push_back(critical_node->row_index);
-		if (this->viewer && show_details) {
-			viewer->update(result, 30, &this->row2pos);
+		result.push_back(cur->row_index);
+		// covering
+		for (auto j = cur->right; j != cur; j = j->right) {
+			covering(j->C);
 		}
 
-		// cur2 is 5
-		Node* cur2 = critical_node->right;
-		while (cur2 != critical_node) {
-			// 把5一整列弄成橙色
-			Node* ver_iter = cur2->down;
-			while (ver_iter != cur2) {
-				if (ver_iter->o_mark != 0 || ver_iter->p_mark != 0) {
-					ver_iter = ver_iter->down;
-					continue;
-				}
-				if (!ver_iter->is_head) {
-					//把经过的节点的横行弄成橙色
-					// hori_iter is 14
-					Node* hori_iter = ver_iter->right;
-					while (hori_iter != ver_iter) {
-						if (hori_iter->p_mark == 0 && hori_iter->o_mark == 0) {
-							hori_iter->C->count--;
-							hori_iter->o_mark = steps;
-							o_set.push_back(hori_iter);
-						}
-						hori_iter = hori_iter->right;
-					}
-				}
-				ver_iter->C->count--;
-				ver_iter->o_mark = steps;
-				o_set.push_back(ver_iter);
-				ver_iter = ver_iter->down;
-			}
-			cur2->C->count--;
-			cur2 = cur2->right;
-		}
-
-		// 开始递归调用
-		dlx(input, result, steps + 1);
-
-		// 开始恢复橙色的点
+		dlx(result);
 		result.pop_back();
+		// uncovering
+		for (auto j = cur->left; j != cur; j = j->left) {
+			uncovering(j->C);
+		}
 		if (this->viewer && show_details) {
 			viewer->update(result, 30, &this->row2pos);
 		}
-		for (Node* o : o_set) {
-			o->C->count++;
-			o->o_mark = 0;
-		}
-		o_set.clear();
+		cur = cur->down;
 	}
+	uncovering(next_to_head);
 
-	//开始恢复紫色的点
-	for (Node* p : p_set) {
-		p->p_mark = 0;
-	}
 }
+
 
 vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	if (show_details) cv::namedWindow("Progress", cv::WINDOW_AUTOSIZE);
 	create_link_table(input);
 	vector<int> result;
-	dlx(input, result, 1);
+	long begin_time = clock();
+	dlx(result);
+	long end_time = clock();
+	cout << end_time - begin_time << endl;
 	if (show_details) cv::destroyWindow("Progress");
 	return final_result;
 }

@@ -107,7 +107,8 @@ namespace yy {
 		c->l.lock()->r = c;
 	}
 
-	void Solver::search(int &sol, int k) {
+	void Solver::search(int &sol, long long int& ccc, int k) {
+		ccc++;
 		if (h->r.lock() == h) {
 			// print solution
 			cout << "found one solution: ";
@@ -133,6 +134,7 @@ namespace yy {
 				cand_c = c;
 			}
 		}
+
 		coverCol(cand_c);
 		for (auto r = cand_c->d.lock(); r != cand_c; r = r->d.lock()) {
 			path.push_back(r);
@@ -140,7 +142,7 @@ namespace yy {
 			for (auto j = r->r.lock(); j != r; j = j->r.lock()) {
 				coverCol(j->c.lock());
 			}
-			search(sol, k + 1);
+			search(sol, ccc, k + 1);
 			for (auto j = r->l.lock(); j != r; j = j->l.lock()) {
 				uncoverCol(j->c.lock());
 			}
@@ -159,7 +161,9 @@ namespace yy {
 		if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, &this->row2pos);
 		int sol = 0;
 		max_sol = num_of_sol;
-		search(sol);
+		long long int ccc = 0;
+		search(sol, ccc);
+		cout << ccc << endl;
 		if (show_details) cv::destroyWindow("Progress");
 	}
 
