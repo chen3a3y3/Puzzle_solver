@@ -53,12 +53,10 @@ void QtAlgorithmX::on_startButton_clicked() {
 	int i = 0;
 	int total_result = 0;
 	for (auto &single: test) {
-		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer);
+		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer, &input);
 		S.show_details = ui.radioButton->isChecked();
 		vector<vector<int>> result = S.solve(single);
-		
 		total_result += result.size();
-		
 	}
 	QString s = QString::number(total_result);
 	emit answerGot(s);

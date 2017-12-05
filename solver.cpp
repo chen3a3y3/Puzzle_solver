@@ -92,12 +92,91 @@ void Solver::covering(Node* node, int index = INT_MAX) {
 }
 
 
+bool Solver::_compare(vector<vector<int>>& a, vector<vector<int>>& b) {
+	assert(a.size() == b.size());
+	assert(a[0].size() == b[0].size());
+
+	for (int i = 0; i < a.size(); i++) {
+		for (int j = 0; j < a[0].size(); j++) {
+			if (a[i][j] != b[i][j]) return false;
+		}
+	}
+	return true;
+}
+
+
+vector<vector<int>>* Solver::rotate_90(vector<vector<int>>* input) {
+	int row = (*input).size(), col = (*input)[0].size();
+	assert(row == col);
+
+	vector<vector<int>>* output = new vector<vector<int>>(row, vector<int>(col, -1));
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			(*output)[i][j] = (*input)[j][col - 1 - i];
+		}
+	}
+	return output;
+
+}
+
+
+vector<vector<int>>* Solver::rotate_180(vector<vector<int>>* input) {
+	int row = (*input).size(), col = (*input)[0].size();
+	vector<vector<int>>* output = new vector<vector<int>>(row, vector<int>(col, -1));
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			(*output)[i][j] = (*input)[row - i - 1][col - j - 1];
+		}
+	}
+	return output;
+}
+
+
+bool Solver::check_is_valid_solution(vector<int>& result) {
+	bool is_square = (input->board->right == input->board->down);
+	vector<vector<int>> *this_solution = new vector<vector<int>>(input->board->down + 1, vector<int>(input->board->right + 1, -1));
+	for (int row : result) {
+		position_set a = row2pos[row];
+		pair<int, int> pa = a.offset;
+		int index = a.index;
+		Tile* tile = a.tile;
+		for (Point* p : tile->point_set) {
+			(*this_solution)[p->row_index + pa.first][p->col_index + pa.second] = index;
+		}
+	}
+	for (auto solution : (*solution_set)) {
+		if (is_square) {
+			vector<vector<int>>* output_1 = rotate_90(this_solution);
+			vector<vector<int>>* output_2 = rotate_180(this_solution);
+			vector<vector<int>>* output_3 = rotate_90(output_2);
+			if (_compare(*solution, *this_solution) || _compare(*solution, *output_1) || _compare(*solution, *output_2) || _compare(*solution, *output_3)) {
+				delete this_solution, output_1, output_2, output_3;
+				return false;
+			}
+			delete output_1, output_2, output_3;
+		}
+		else {
+			vector<vector<int>>* output_1 = rotate_180(this_solution);
+			if (_compare(*solution, *this_solution) || _compare(*solution, *output_1)) {
+				delete this_solution, output_1;
+				return false;
+			}
+			delete output_1;
+		}
+	}
+	(*solution_set).push_back(this_solution);
+	return true;
+}
+
+
 void Solver::dlx(vector<int>& result) {
 	if (head->right == head) {
-		if (this->viewer && show_details) {
-			viewer->update(result, 0, &this->row2pos);
+		if (check_is_valid_solution(result)) {
+			if (this->viewer && show_details) {
+				viewer->update(result, 0, &this->row2pos);
+			}
+			final_result.push_back(result);
 		}
-		final_result.push_back(result);
 		return;
 	}
 
@@ -128,7 +207,7 @@ void Solver::dlx(vector<int>& result) {
 			uncovering(j->C);
 		}
 		if (this->viewer && show_details) {
-			viewer->update(result, 30, &this->row2pos);
+			viewer->update(result, 10, &this->row2pos);
 		}
 		cur = cur->down;
 	}
