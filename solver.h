@@ -52,6 +52,6 @@ public:
 	bool check_is_valid_solution(vector<int>& result);
 	bool _compare(vector<vector<int>>& a, vector<vector<int>>& b);
 	void rotate_90(vector<vector<int>>* input, vector<vector<int>>& output);
+	void updateFirstTime(long time);
+	void updateAllTime(long time);
 };
-
-

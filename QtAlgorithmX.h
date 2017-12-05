@@ -9,6 +9,7 @@ class QtAlgorithmX : public QMainWindow
 	Q_OBJECT
 
 public:
+	Ui::QtAlgorithmXClass ui;
 	QtAlgorithmX(QWidget *parent = Q_NULLPTR);
 public slots:
 	void onButtonClicked();
@@ -17,10 +18,10 @@ public slots:
 signals:
 	void fileSelected(QString);
 	void answerGot(QString);
-
+	
 private:
 	std::string selected_file;
 	int desktop_width;
 	int desktop_height;
-	Ui::QtAlgorithmXClass ui;
+	
 };

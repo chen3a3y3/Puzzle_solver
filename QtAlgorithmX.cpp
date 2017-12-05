@@ -41,7 +41,7 @@ void QtAlgorithmX::on_startButton_clicked() {
 	if (!infile.good()) return;
 	vector<vector<vector<int>>> test;
 	Input input = Input();
-	if (!input.input_process(selected_file, test, true)) return;
+	if (!input.input_process(selected_file, test, ui.frBox->isChecked())) return;
 	int num = input.total_tile_number;
 	int c = input.board->right + 1;
 	int r = input.board->down + 1;
@@ -54,12 +54,13 @@ void QtAlgorithmX::on_startButton_clicked() {
 	int total_result = 0;
 	for (auto &single: test) {
 		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer, &input);
-		S.show_details = ui.radioButton->isChecked();
+		S.show_details = ui.detailBox->isChecked();
+		S.qt = this;
 		vector<vector<int>> result = S.solve(single);
 		total_result += result.size();
-	}
+	} 
 	QString s = QString::number(total_result);
-	emit answerGot(s);
+	emit answerGot("Total number of solutions: " + s);
 #else
 
 	int i = 0;
