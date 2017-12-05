@@ -14,6 +14,7 @@ using namespace std;
 class position_set;
 class Viewer;
 class Input;
+class QtAlgorithmX;
 class Solver {
 private:
 	int row;
@@ -24,7 +25,9 @@ private:
 	unordered_map<int, position_set> row2pos;
 	vector<vector<vector<int>>*>* solution_set;
 	Input *input = nullptr;
+	
 public:
+	QtAlgorithmX *qt = nullptr;
 	bool show_details = true;
 	Solver(int row, int col, const unordered_map<int, position_set> &row2pos, Viewer *viewer, Input *input) {
 		this->row = row;
@@ -52,6 +55,8 @@ public:
 	bool check_is_valid_solution(vector<int>& result);
 	bool _compare(vector<vector<int>>& a, vector<vector<int>>& b);
 	vector<vector<int>>* rotate_90(vector<vector<int>>* input);
+	void updateFirstTime(long time);
+	void updateAllTime(long time);
 };
 
 

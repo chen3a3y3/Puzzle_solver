@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "QtAlgorithmX.h"
 
 void Solver::create_link_table(vector<vector<int>>& input) {
 	// create assistant node
@@ -224,6 +225,18 @@ vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	dlx(result);
 	long end_time = clock();
 	cout << end_time - begin_time << endl;
+	updateAllTime(end_time - begin_time);
 	if (show_details) cv::destroyWindow("Progress");
+	
 	return final_result;
+}
+
+void Solver::updateFirstTime(long time) {
+	QString s = QString::number(time);
+	qt->ui.t1Label->setText("Time to find the first solution: "  + s + "ms");
+}
+
+void Solver::updateAllTime(long time) {
+	QString s = QString::number(time);
+	qt->ui.t2Label->setText("Time to find all solutions: " + s + "ms");
 }
