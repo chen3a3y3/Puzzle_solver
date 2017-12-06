@@ -1,3 +1,4 @@
+// QtAlgorithmX.cpp
 #include "QtAlgorithmX.h"
 #include <qdesktopwidget.h>
 #include <iostream>
@@ -75,6 +76,7 @@ void QtAlgorithmX::on_startButton_clicked() {
 		total_result += result.size();
 	}
 	
+    // end of solve
 	endTime = clock();
 	QString s = QString::number(endTime - beginTime);
 	this->ui.t2Label->setText("Time to find all solutions: " + s + "ms");

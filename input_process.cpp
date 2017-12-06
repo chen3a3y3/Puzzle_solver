@@ -1,3 +1,7 @@
+// input_process.cpp
+// Input processing process in included in this file.
+// Transfer the ASKII to a matrix
+
 #include "input_process.h"
 
 bool Input::is_contain_point(Point* target, Tile* t) {

@@ -1,3 +1,6 @@
+// tile.h
+// build up a class represnting each point
+// build up a class representing each tile
 #pragma once
 #include <iostream>
 #include <vector>
