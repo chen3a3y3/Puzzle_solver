@@ -1,4 +1,5 @@
 #include "node.h"
+// move node to the specific direction and specific distance
 Node* Node::move_node(string dir, int times) {
 	try {
 		Node* cur = this;

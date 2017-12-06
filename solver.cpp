@@ -61,6 +61,7 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 }
 
 
+// uncovering operation
 void Solver::uncovering(Node* node) {
 	Node* i = node->up;
 	while (i != node) {
@@ -78,6 +79,7 @@ void Solver::uncovering(Node* node) {
 }
 
 
+// covering operation
 void Solver::covering(Node* node, int index = INT_MAX) {
 	node->left->right = node->right;
 	node->right->left = node->left;
@@ -173,6 +175,7 @@ bool Solver::check_is_valid_solution(vector<int>& result) {
 }
 
 
+// dancing link
 void Solver::dlx(vector<int>& result) {
 	if (qt->requestedStop) return;
 	if (head->right == head) {

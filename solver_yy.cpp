@@ -111,11 +111,11 @@ namespace yy {
 		ccc++;
 		if (h->r.lock() == h) {
 			// print solution
-			cout << "found one solution: ";
+			/*cout << "found one solution: ";
 			for (size_t i = 0; i < path.size(); i++) {
 				cout << static_pointer_cast<DataObject>(path[i])->r_idx << ", ";
 			}
-			cout << endl;
+			cout << endl;*/
 			const auto &rows = path2rows(path);
 			if (this->viewer && show_details) this->viewer->update(path2rows(path), 0, &this->row2pos);
 			sols.push_back(rows);

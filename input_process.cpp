@@ -9,6 +9,7 @@ bool Input::is_contain_point(Point* target, Tile* t) {
 	return false;
 }
 
+// check whether the new tile after rotating or fliping is the same as the old tiles
 bool Input::check_is_diff(vector<Tile*>& single, Tile* tt) {
 	for (Tile* t : single) {
 		bool flag = false;
@@ -46,6 +47,7 @@ bool Input::check(int idx, Tile* cur, int row_offset, int col_offset) {
 	return true;
 }
 
+// the main function to process the input data
 bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool f_and_r) {
 	char data[256];
 	vector<string> input_string;
@@ -69,7 +71,7 @@ bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool 
 	}
 	
 	queue<Point*> q;
-	// 把raw_data 转换成 tile的对象
+	// transfer the raw_data to tile object
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
 			if (raw_data[i][j] == ' ')  continue;
@@ -122,7 +124,7 @@ bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool 
 	}
 	tile_set.erase(tile_set.begin() + position);
 
-	// 给tile编号
+	// give the index to each tile
 	for (int i = 0; i < (int)tile_set.size(); i++) {
 		tile_set[i]->index = i;
 	}
@@ -152,7 +154,7 @@ bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool 
 		position2cols.push_back(unordered_map<pair<int, int>, int, hash_func, cmp_func>());
 		row2positions.push_back(unordered_map<int, position_set>());
 
-		// 建立坐标和board里value的映射表
+		// create the map between index and point value of board
 		create_index2value(i, tile_numbers[i]);
 	}
 	
@@ -160,7 +162,7 @@ bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool 
 	int tile_set_idx = 0;
 	for (auto &tile_set : all_tile_sets) {
 		vector<vector<int>> single_input;
-		// 判断旋转或者翻转
+		// if user checks flip and rotate box
 		if (f_and_r) {
 			vector<Tile*> new_tile_set = tile_set;
 			for (Tile* t : new_tile_set) {
@@ -206,35 +208,12 @@ bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool 
 			}
 		}
 
-		// 测试
-		//for (Tile* t : tile_set) {
-		//	cout << t->index << endl;
-		//	for (Point* p : t->point_set) {
-		//		cout << p->row_index << " " << p->col_index << " " << p->value << endl;
-		//	}
-		//	cout << endl;
-		//}
-
-		//Tile* debug = new Tile();
-		//Point* a = new Point(0, 0, 'X');
-		//Point* b = new Point(0, 1, 'X');
-		//Point* c = new Point(1, 0, 'X');
-		//Point* d = new Point(2, 0, 'X');
-		//debug->point_set.push_back(a);
-		//debug->point_set.push_back(b);
-		//debug->point_set.push_back(c);
-		//debug->point_set.push_back(d);
-		//cout << single.size() << endl;
-		//cout << check_is_diff(single, debug) << endl;
-
-		
-
-		// 开始生成return的matrix
+		// generate the matrix which used in Algorithm X
 		int matrix_col_size = tile_numbers[tile_set_idx] + board->point_set.size();
 		int row_index = 0;
 		for (int index = 0; index < (int)tile_set.size(); index++) {
 			Tile* cur = tile_set[index];
-			// 对于其中一块tile，开始计算可行位置
+			// get the valid position of one tile
 			for (int i = 0; i <= board->down - cur->down; i++) {
 				for (int j = 0; j <= board->right - cur->right; j++) {
 					vector<int> temp(matrix_col_size, 0);
@@ -261,6 +240,7 @@ bool Input::input_process(string path, vector<vector<vector<int>>>& input, bool 
 	}
 	return true;
 }
+
 
 vector<vector<Tile *>> Input::get_sub_tile_set(const vector<Tile*> &tile_set, int target) {
 	// brute force

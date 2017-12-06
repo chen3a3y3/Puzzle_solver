@@ -3,15 +3,11 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
-#ifdef AC2ME
 #include "solver.h"
 #include "viewer.h"
 #include "input_process.h"
-#else
-#include "solver_yy.h"
-#include "viewer.h"
-#include "input_process.h"
-#endif // AC2ME
+
+extern long beginTime, endTime, endFirstTime;
 
 void QtAlgorithmX::onDetailChecked(bool checked) {
 	if (checked) ui.singleBox->setChecked(false);
@@ -32,14 +28,11 @@ QtAlgorithmX::QtAlgorithmX(QWidget *parent)
 	ui.setupUi(this);
 	this->setGeometry(QRect(desktop_width / 4, desktop_height / 4,
 		desktop_width / 2, desktop_height / 2));
-
-	QPixmap bkgnd("..\\AlgorithmX\\q.jpg");
-	bkgnd = bkgnd.scaled(this->size(), Qt::IgnoreAspectRatio);
-	QPalette palette;
-	palette.setBrush(QPalette::Background, bkgnd);
-	this->setPalette(palette);
-//	auto geo = ui.centralWidget->geometry();
-//	ui.gridLayout->setGeometry(ui.centralWidget->geometry());
+	//QPixmap bkgnd("..\\AlgorithmX\\q.jpg");
+	//bkgnd = bkgnd.scaled(this->size(), Qt::IgnoreAspectRatio);
+	//QPalette palette;
+	//palette.setBrush(QPalette::Background, bkgnd);
+	//this->setPalette(palette);
 }
 
 void QtAlgorithmX::onButtonClicked()
@@ -60,6 +53,8 @@ void QtAlgorithmX::on_startButton_clicked() {
 	if (!infile.good()) return;
 	vector<vector<vector<int>>> test;
 	Input input = Input();
+
+	// input process
 	if (!input.input_process(selected_file, test, ui.frBox->isChecked())) return;
 	int num = input.total_tile_number;
 	int c = input.board->right + 1;
@@ -68,37 +63,33 @@ void QtAlgorithmX::on_startButton_clicked() {
 	Viewer viewer(c * desktop_height / 20, r * desktop_height / 20);
 	viewer.init(num, input.board);
 
-#ifdef AC2ME
 	int i = 0;
 	int total_result = 0;
+	vector<vector<int>> result;
 	for (auto &single: test) {
 		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer, &input);
 		S.show_details = ui.detailBox->isChecked();
 		S.qt = this;
-		vector<vector<int>> result = S.solve(single);
+		// start solve 
+		result = S.solve(single);
 		total_result += result.size();
-	} 
+	}
+	
 	endTime = clock();
-	QString s = QString::number(endTime-beginTime);
+	QString s = QString::number(endTime - beginTime);
 	this->ui.t2Label->setText("Time to find all solutions: " + s + "ms");
 
 	s = QString::number(total_result);
 	emit answerGot("Total number of solutions: " + s);
-#else
 
-	int i = 0;
-	for (const auto &single : test) {
-		yy::Solver solver;
-		solver.show_details = ui.radioButton->isChecked();
-		solver.init(single, input.row2positions[i++], &viewer);
-		solver.solve(1000000);
-
-		const auto &sol = solver.getSols();
-		QString s = QString::number(sol.size());
-		emit answerGot(s);
+	// save solution
+	if (result.empty()) return;
+	int count = 0;
+	for (; count < 5; count++) {
+		string path = "C:\\Users\\41359\\Desktop\\" + to_string(count) + ".jpg";
+		int number = rand() % result.size();
+		viewer.save(result[number], &input.row2positions.back(), path);
 	}
-	
-#endif
 }
 
 void QtAlgorithmX::onFileSelected(QString qs) {

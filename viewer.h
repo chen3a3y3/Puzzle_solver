@@ -2,9 +2,7 @@
 #include <unordered_map>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#ifndef AC2ME
-#include "solver_yy.h"
-#endif
+
 using namespace std;
 
 class position_set;
