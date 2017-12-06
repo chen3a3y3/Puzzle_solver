@@ -174,7 +174,9 @@ bool Solver::check_is_valid_solution(vector<int>& result) {
 
 
 void Solver::dlx(vector<int>& result) {
-	if (qt->requestedStop) return;
+	if (qt->requestedStop) {
+		return;
+	}
 	if (head->right == head) {
 		if (check_is_valid_solution(result)) {
 			if (this->viewer && show_details) {
