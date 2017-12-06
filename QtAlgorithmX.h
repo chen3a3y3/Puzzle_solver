@@ -11,6 +11,7 @@ class QtAlgorithmX : public QMainWindow
 	Q_OBJECT
 
 public:
+	void onFinished(int);
 	bool requestedStop = false;
 	Ui::QtAlgorithmXClass ui;
 	QtAlgorithmX(QWidget *parent = Q_NULLPTR);
@@ -21,6 +22,7 @@ public slots:
 	void on_stopButton_clicked();
 	void onDetailChecked(bool);
 	void onSingleChecked(bool);
+	
 signals:
 	void fileSelected(QString);
 	void answerGot(QString);
@@ -29,5 +31,4 @@ private:
 	std::string selected_file;
 	int desktop_width;
 	int desktop_height;
-	
 };
