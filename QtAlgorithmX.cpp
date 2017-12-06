@@ -18,6 +18,7 @@ void solve(QtAlgorithmX *qt, shared_ptr<vector<vector<vector<int>>>> test,
 	shared_ptr<Input> input, shared_ptr<Viewer> viewer) {
 	auto beginTime = clock();
 	int total_result = 0;
+#ifdef AC2ME
 	for (int i = 0; i < test->size(); i++) {
 		auto &single = (*test)[i];
 		Solver S(single.size(), single[0].size(), input->row2positions[i++], viewer.get(), input.get());
@@ -26,6 +27,18 @@ void solve(QtAlgorithmX *qt, shared_ptr<vector<vector<vector<int>>>> test,
 		vector<vector<int>> result = S.solve(single);
 		total_result += result.size();
 	}
+#else
+		for (int i = 0; i < test->size(); i++) {
+			auto &single = (*test)[i];
+			yy::Solver solver;
+			solver.show_details = qt->ui.detailBox->isChecked();
+			solver.init(single, input->row2positions[i++], viewer.get());
+			solver.solve(1000000);
+	
+			const auto &sol = solver.getSols();
+			total_result += sol.size();
+		}
+#endif
 	auto endTime = clock();
 	qt->onFinished(total_result);
 	QString s = QString::number(endTime - beginTime);

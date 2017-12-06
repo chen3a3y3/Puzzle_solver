@@ -13,7 +13,7 @@ class Viewer;
 class position_set;
 class Object {
 public:
-	weak_ptr<Object> l, r, u, d, c;
+	Object *l, *r, *u, *d, *c;
 };
 
 class DataObject : public Object {
@@ -30,21 +30,21 @@ public:
 namespace yy {
 	class Solver {
 		vector<vector<int>> map;
-		shared_ptr<ColumnObject> h;
+		ColumnObject *h;
 		// for maintaining strong reference
-		vector<shared_ptr<Object>> all_nodes;
+		vector<Object*> all_nodes;
 		// for solution printing
-		vector<shared_ptr<Object>> path;
+		vector<Object*> path;
 		// r_idx sols
 		vector<vector<int>> sols;
-		void coverCol(const shared_ptr<Object> &c);
-		void uncoverCol(const shared_ptr<Object> &c);
+		void coverCol(Object* c);
+		void uncoverCol(Object* c);
 		bool inited = false;
 		void search(int &sol, long long int&, int k = 0);
 		Viewer *viewer = nullptr;
 		unordered_map<int, position_set> row2pos;
 		int max_sol = 0;
-		vector<int> path2rows(const vector<shared_ptr<Object>> &);
+		vector<int> path2rows(const vector<Object*> &);
 		vector<vector<int>> rows2map(const vector<int> &);
 
 	public:

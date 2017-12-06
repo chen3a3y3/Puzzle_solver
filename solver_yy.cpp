@@ -10,7 +10,7 @@ namespace yy {
 		this->viewer = viewer;
 		this->row2pos = row2pos;
 		sols.clear();
-		h = make_shared<ColumnObject>();
+		h = new ColumnObject();
 		all_nodes.push_back(h);
 		int rows = mat.size();
 		if (rows == 0) return;
@@ -18,22 +18,22 @@ namespace yy {
 		if (cols == 0) return;
 		map = mat;
 
-		vector<shared_ptr<Object>> rows_obj(rows, nullptr);
+		vector<Object*> rows_obj(rows, nullptr);
 
 		auto iter_c = h;
 		for (int i = 0; i < cols; i++) {
-			auto c = make_shared<ColumnObject>();
+			auto c = new ColumnObject();
 			all_nodes.push_back(c);
 			iter_c->r = c;
 			c->l = iter_c;
 			c->c = c;
 
 			int one_cnt = 0;
-			shared_ptr<Object> iter_r = c;
+			Object *iter_r = c;
 			for (int j = 0; j < rows; j++) {
 				if (mat[j][i]) {
 					one_cnt++;
-					auto r = make_shared<DataObject>();
+					auto r = new DataObject();
 					all_nodes.push_back(r);
 					iter_r->d = r;
 					r->u = iter_r;
@@ -48,7 +48,7 @@ namespace yy {
 						r->l = r;
 					}
 					else {
-						rows_obj[j]->r.lock()->l = r;
+						rows_obj[j]->r->l = r;
 						r->r = rows_obj[j]->r;
 						rows_obj[j]->r = r;
 						r->l = rows_obj[j];
@@ -71,63 +71,65 @@ namespace yy {
 		inited = true;
 	}
 
-	void Solver::coverCol(const shared_ptr<Object> &c) {
-		c->l.lock()->r = c->r;
-		c->r.lock()->l = c->l;
+	void Solver::coverCol(Object* c) {
+		c->l->r = c->r;
+		c->r->l = c->l;
 
-		auto i = c->d.lock();
+		auto i = c->d;
 		while (i != c) {
-			auto j = i->r.lock();
+			auto j = i->r;
 			while (j != i) {
-				j->u.lock()->d = j->d;
-				j->d.lock()->u = j->u;
-				static_pointer_cast<ColumnObject>(j->c.lock())->s -= 1;
+				j->u->d = j->d;
+				j->d->u = j->u;
+				static_cast<ColumnObject*>(j->c)->s -= 1;
 
-				j = j->r.lock();
+				j = j->r;
 			}
-			i = i->d.lock();
+			i = i->d;
 		}
 	}
 
-	void Solver::uncoverCol(const shared_ptr<Object> &c) {
-		auto i = c->u.lock();
+	void Solver::uncoverCol(Object* c) {
+		auto i = c->u;
 		while (i != c) {
-			auto j = i->l.lock();
+			auto j = i->l;
 			while (j != i) {
-				static_pointer_cast<ColumnObject>(j->c.lock())->s += 1;
-				j->d.lock()->u = j;
-				j->u.lock()->d = j;
+				static_cast<ColumnObject*>(j->c)->s += 1;
+				j->d->u = j;
+				j->u->d = j;
 
-				j = j->l.lock();
+				j = j->l;
 			}
-			i = i->u.lock();
+			i = i->u;
 		}
 
-		c->r.lock()->l = c;
-		c->l.lock()->r = c;
+		c->r->l = c;
+		c->l->r = c;
 	}
 
 	void Solver::search(int &sol, long long int& ccc, int k) {
 		ccc++;
-		if (h->r.lock() == h) {
+		if (h->r == h) {
 			// print solution
 			/*cout << "found one solution: ";
 			for (size_t i = 0; i < path.size(); i++) {
 				cout << static_pointer_cast<DataObject>(path[i])->r_idx << ", ";
 			}
 			cout << endl;*/
-			const auto &rows = path2rows(path);
+
+			/*const auto &rows = path2rows(path);
 			if (this->viewer && show_details) this->viewer->update(path2rows(path), 0, &this->row2pos);
-			sols.push_back(rows);
+			sols.push_back(rows);*/
+			sols.push_back(vector<int>());
 			sol++;
 			return;
 		}
 		if (sol >= max_sol) return;
 
 		int min_cnt = std::numeric_limits<int>::max();
-		shared_ptr<ColumnObject> cand_c;
-		for (auto r = h->r.lock(); r != h;  r = r->r.lock()) {
-			auto c = static_pointer_cast<ColumnObject>(r);
+		ColumnObject *cand_c;
+		for (auto r = h->r; r != h;  r = r->r) {
+			auto c = static_cast<ColumnObject*>(r);
 			int cnt = c->s;
 			if (cnt < min_cnt) {
 				min_cnt = cnt;
@@ -136,15 +138,15 @@ namespace yy {
 		}
 
 		coverCol(cand_c);
-		for (auto r = cand_c->d.lock(); r != cand_c; r = r->d.lock()) {
+		for (auto r = cand_c->d; r != cand_c; r = r->d) {
 			path.push_back(r);
 			if(this->viewer && show_details) this->viewer->update(path2rows(path), 30, &this->row2pos);
-			for (auto j = r->r.lock(); j != r; j = j->r.lock()) {
-				coverCol(j->c.lock());
+			for (auto j = r->r; j != r; j = j->r) {
+				coverCol(j->c);
 			}
 			search(sol, ccc, k + 1);
-			for (auto j = r->l.lock(); j != r; j = j->l.lock()) {
-				uncoverCol(j->c.lock());
+			for (auto j = r->l; j != r; j = j->l) {
+				uncoverCol(j->c);
 			}
 			path.pop_back();
 			if (this->viewer && show_details) this->viewer->update(path2rows(path), 30, &this->row2pos);
@@ -172,10 +174,10 @@ namespace yy {
 		return sols;
 	}
 
-	vector<int> Solver::path2rows(const vector<shared_ptr<Object>> &p) {
+	vector<int> Solver::path2rows(const vector<Object*> &p) {
 		vector<int> result;
 		for (size_t i = 0; i < p.size(); i++) {
-			result.push_back(static_pointer_cast<DataObject>(p[i])->r_idx);
+			result.push_back(static_cast<DataObject*>(p[i])->r_idx);
 		}
 		return result;
 	}
