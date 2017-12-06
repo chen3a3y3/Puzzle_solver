@@ -14,12 +14,13 @@
 #include "input_process.h"
 #endif // AC2ME
 
-void solve(QtAlgorithmX *qt, vector<vector<vector<int>>> *test, Input *input, Viewer *viewer) {
+void solve(QtAlgorithmX *qt, shared_ptr<vector<vector<vector<int>>>> test, 
+	shared_ptr<Input> input, shared_ptr<Viewer> viewer) {
 	auto beginTime = clock();
 	int total_result = 0;
 	for (int i = 0; i < test->size(); i++) {
 		auto &single = (*test)[i];
-		Solver S = Solver(single.size(), single[0].size(), input->row2positions[i++], viewer, input);
+		Solver S(single.size(), single[0].size(), input->row2positions[i++], viewer.get(), input.get());
 		S.show_details = qt->ui.detailBox->isChecked();
 		S.qt = qt;
 		vector<vector<int>> result = S.solve(single);
@@ -81,14 +82,14 @@ void QtAlgorithmX::on_startButton_clicked() {
 	beginTime = clock();
 	std::ifstream infile(selected_file);
 	if (!infile.good()) return;
-	auto test = new vector<vector<vector<int>>>();
-	Input *input = new Input();
+	auto test = make_shared<vector<vector<vector<int>>>>();
+	auto input = make_shared<Input>();
 	if (!input->input_process(selected_file, *test, ui.frBox->isChecked())) return;
 	int num = input->total_tile_number;
 	int c = input->board->right + 1;
 	int r = input->board->down + 1;
 
-	Viewer *viewer = new Viewer(c * desktop_height / 20, r * desktop_height / 20);
+	auto viewer = make_shared<Viewer>(c * desktop_height / 20, r * desktop_height / 20);
 	viewer->init(num, input->board);
 
 	auto th = std::thread(solve, this, test, input, viewer);
