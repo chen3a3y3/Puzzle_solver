@@ -33,7 +33,7 @@ QtAlgorithmX::QtAlgorithmX(QWidget *parent)
 	this->setGeometry(QRect(desktop_width / 4, desktop_height / 4,
 		desktop_width / 2, desktop_height / 2));
 
-	QPixmap bkgnd("..\\AlgorithmX\\q.jpg");
+	QPixmap bkgnd("..\\QtAlgorithmX\\q.jpg");
 	bkgnd = bkgnd.scaled(this->size(), Qt::IgnoreAspectRatio);
 	QPalette palette;
 	palette.setBrush(QPalette::Background, bkgnd);
@@ -68,9 +68,9 @@ void QtAlgorithmX::on_startButton_clicked() {
 	Viewer viewer(c * desktop_height / 20, r * desktop_height / 20);
 	viewer.init(num, input.board);
 
+	int total_result = 0;
 #ifdef AC2ME
 	int i = 0;
-	int total_result = 0;
 	for (auto &single: test) {
 		Solver S = Solver(single.size(), single[0].size(), input.row2positions[i++], &viewer, &input);
 		S.show_details = ui.detailBox->isChecked();
@@ -78,25 +78,25 @@ void QtAlgorithmX::on_startButton_clicked() {
 		vector<vector<int>> result = S.solve(single);
 		total_result += result.size();
 	} 
-	endTime = clock();
-	QString s = QString::number(endTime-beginTime);
-	this->ui.t2Label->setText("Time to find all solutions: " + s + "ms");
-
-	s = QString::number(total_result);
-	emit answerGot("Total number of solutions: " + s);
+	
 #else
 
 	int i = 0;
 	for (const auto &single : test) {
 		yy::Solver solver;
-		solver.show_details = ui.radioButton->isChecked();
+		solver.show_details = ui.detailBox->isChecked();
 		solver.init(single, input.row2positions[i++], &viewer);
 		solver.solve(1000000);
 
 		const auto &sol = solver.getSols();
-		QString s = QString::number(sol.size());
-		emit answerGot(s);
+		total_result += sol.size();
 	}
+	endTime = clock();
+	QString s = QString::number(endTime - beginTime);
+	this->ui.t2Label->setText("Time to find all solutions: " + s + "ms");
+
+	s = QString::number(total_result);
+	emit answerGot("Total number of solutions: " + s);
 	
 #endif
 }
