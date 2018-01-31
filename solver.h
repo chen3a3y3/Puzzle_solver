@@ -24,6 +24,7 @@ private:
 	int col;
 	Node* head = new Node(-1, -1);
 	vector<vector<int>> final_result;
+	vector<vector<int>> input_data;
 	Viewer *viewer = nullptr;
 	unordered_map<int, position_set> row2pos;
 	vector<vector<vector<int>>*>* solution_set;
@@ -49,8 +50,10 @@ public:
 		head = nullptr;
 	}
 	vector<vector<int>> solve(vector<vector<int>>& input);
-	void create_link_table(vector<vector<int>>& input);
-	void dlx(vector<int>& result);
+	Node *create_link_table(const vector<vector<int>>& input);
+	void dlx(vector<int>& result, Node *head, int k);
+	void solve1(vector<int>& result, Node *head, Node *cur, int k, int r);
+	void dlx1(vector<int>& result, Node *head, int k);
 	void covering(Node* node, int index);
 	void uncovering(Node* node);
 	void rotate_180(vector<vector<int>>* input, vector<vector<int>>& output);

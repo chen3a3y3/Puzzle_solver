@@ -3,15 +3,17 @@
 #include "input_process.h"
 #include <time.h>
 #include <assert.h>
+#include <future>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "QtAlgorithmX.h"
 
 long beginTime, firstEndTime, endTime;
 
-void Solver::create_link_table(vector<vector<int>>& input) {
+Node *Solver::create_link_table(const vector<vector<int>>& input) {
 	// create assistant node
-	Node* cur = head;
+	Node* h = new Node(-1, -1);
+	Node* cur = h;
 	for (int i = 0; i < col; i++) {
 		Node* node = new Node(-1, i);
 		node->C = node;
@@ -20,8 +22,8 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 		node->left = cur;
 		cur = node;
 	}
-	cur->right = head;
-	head->left = cur;
+	cur->right = h;
+	h->left = cur;
 
 	// create link table
 	for (int i = 0; i < row; i++) {
@@ -37,7 +39,7 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 			if (cur != nullptr) cur->right = node;
 			cur = node;
 
-			Node* assist = head->move_node("right", j + 1);
+			Node* assist = h->move_node("right", j + 1);
 			Node* upper_node = assist->go_to_end();
 			upper_node->down = node;
 			node->up = upper_node;
@@ -53,11 +55,12 @@ void Solver::create_link_table(vector<vector<int>>& input) {
 
 	// set the link list is vertical circulatory
 	for (int i = 0; i < col; i++) {
-		Node* assist = head->move_node("right", i + 1);
+		Node* assist = h->move_node("right", i + 1);
 		Node* last = assist->go_to_end();
 		last->down = assist;
 		assist->up = last;
 	}
+	return h;
 }
 
 
@@ -176,12 +179,12 @@ bool Solver::check_is_valid_solution(vector<int>& result) {
 
 
 // dancing link
-void Solver::dlx(vector<int>& result) {
+void Solver::dlx(vector<int>& result, Node *head, int k) {
 	if (qt->requestedStop) {
 		return;
 	}
 	if (head->right == head) {
-		if (check_is_valid_solution(result)) {
+		/*if (check_is_valid_solution(result)) {
 			if (this->viewer && show_details) {
 				viewer->update(result, 0, &this->row2pos);
 			}
@@ -190,7 +193,7 @@ void Solver::dlx(vector<int>& result) {
 				updateFirstTime(firstEndTime - beginTime);
 			}
 			final_result.push_back(result);
-		}
+		}*/
 		return;
 	}
 
@@ -207,8 +210,10 @@ void Solver::dlx(vector<int>& result) {
 
 	covering(next_to_head);
 	Node* cur = next_to_head->down;
+	
+	vector<thread> threads;
 	while (cur != next_to_head) {
-		result.push_back(cur->row_index);
+		// result.push_back(cur->row_index);
 		if (this->viewer && (show_details || qt->ui.singleBox->isChecked())) {
 			viewer->update(result, show_details ? 10 : 0, &this->row2pos);
 		}
@@ -218,8 +223,11 @@ void Solver::dlx(vector<int>& result) {
 			covering(j->C);
 		}
 
-		dlx(result);
-		result.pop_back();
+		if (k < 0)
+			threads.push_back(thread(&Solver::dlx, this, result, create_link_table(input_data), k + 1));
+		else 
+			dlx(result, head, k+1);
+		// result.pop_back();
 		// uncovering
 		for (auto j = cur->left; j != cur; j = j->left) {
 			uncovering(j->C);
@@ -229,6 +237,102 @@ void Solver::dlx(vector<int>& result) {
 		}
 		cur = cur->down;
 	}
+	for (int i = 0; i < threads.size(); i++) threads[i].join();
+	uncovering(next_to_head);
+
+}
+
+void Solver::solve1(vector<int>& result, Node *head, Node *cur, int k, int r) {
+	for (int i = 0; i < r; i++) {
+		for (auto j = cur->right; j != cur; j = j->right) {
+			covering(j->C);
+		}
+
+		dlx(result, head, k + 1);
+
+		// uncovering
+		for (auto j = cur->left; j != cur; j = j->left) {
+			uncovering(j->C);
+		}
+		cur = cur->down;
+	}
+}
+
+void Solver::dlx1(vector<int>& result, Node *head, int k) {
+	if (qt->requestedStop) {
+		return;
+	}
+	if (head->right == head) {
+		/*if (check_is_valid_solution(result)) {
+		if (this->viewer && show_details) {
+		viewer->update(result, 0, &this->row2pos);
+		}
+		if (final_result.empty()) {
+		firstEndTime = clock();
+		updateFirstTime(firstEndTime - beginTime);
+		}
+		final_result.push_back(result);
+		}*/
+		return;
+	}
+
+	int min_count = INT_MAX;
+	Node* _cur = head->right;
+	Node* next_to_head = nullptr;
+	int cnt = 1, min_cnt = 1;
+	while (_cur != head) {
+		if (_cur->count < min_count) {
+			min_count = _cur->count;
+			next_to_head = _cur;
+			min_cnt = cnt;
+		}
+		_cur = _cur->right;
+		cnt++;
+	}
+
+	covering(next_to_head);
+	//Node* cur = next_to_head->down;
+
+	vector<thread> threads;
+	int n_threads = 4;
+	for (int i = 0; i < 1; i++) {
+		Node *h = create_link_table(input_data);
+		Node *he = h;
+		h = h->right;
+		/*for (int j = 0; j < min_cnt; j++) {
+			h = h->right;
+		}*/
+		covering(h);
+		h = h->down;
+		/*for (int j = 0; j < row / 4 * i; j++) {
+			h = h->down;
+		}*/
+		threads.push_back(thread(&Solver::solve1, this, result, he, h,  k + 1, row / 4));
+		
+	}
+	//while (cur != next_to_head) {
+	//	// result.push_back(cur->row_index);
+	//	if (this->viewer && (show_details || qt->ui.singleBox->isChecked())) {
+	//		viewer->update(result, show_details ? 10 : 0, &this->row2pos);
+	//	}
+
+	//	// covering
+	//	for (auto j = cur->right; j != cur; j = j->right) {
+	//		covering(j->C);
+	//	}
+
+	//	if (k < 0)
+	//		threads.push_back(thread(&Solver::dlx, this, result, create_link_table(input_data), k + 1));
+	//	else
+	//		dlx(result, head, k + 1);
+	//	// result.pop_back();
+	//	// uncovering
+	//	for (auto j = cur->left; j != cur; j = j->left) {
+	//		uncovering(j->C);
+	//	}
+	//	cur = cur->down;
+	//}
+	for (int i = 0; i < threads.size(); i++) threads[i].join();
 	uncovering(next_to_head);
 
 }
@@ -236,9 +340,10 @@ void Solver::dlx(vector<int>& result) {
 
 vector<vector<int>> Solver::solve(vector<vector<int>>& input) {
 	if (show_details) cv::namedWindow("Progress", cv::WINDOW_AUTOSIZE);
-	create_link_table(input);
+	input_data = input;
+	head = create_link_table(input_data);
 	vector<int> result;
-	dlx(result);
+	dlx1(result, head, 0);
 	if (show_details) cv::destroyWindow("Progress");
 	
 	return final_result;

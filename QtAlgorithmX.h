@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
-#include <QtWidgets\qfiledialog.h>
+#include <QtWidgets/qfiledialog.h>
 #include "ui_QtAlgorithmX.h"
 
 extern long beginTime, firstEndTime, endTime;
@@ -20,6 +20,7 @@ public slots:
 	void onFileSelected(QString);
 	void on_startButton_clicked();
 	void on_stopButton_clicked();
+	void on_openButton_clicked();
 	void onDetailChecked(bool);
 	void onSingleChecked(bool);
 	

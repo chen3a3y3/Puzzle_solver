@@ -4,7 +4,8 @@
 #include <fstream>
 #include <time.h>
 #include <future>
-#include "solver.h"
+#include "solver_yy.h"
+#include "QtOpenGL.h"
 #include "viewer.h"
 #include "input_process.h"
 
@@ -16,10 +17,16 @@ void solve(QtAlgorithmX *qt, shared_ptr<vector<vector<vector<int>>>> test,
 	int total_result = 0;
 	for (int i = 0; i < test->size(); i++) {
 		auto &single = (*test)[i];
-		Solver S(single.size(), single[0].size(), input->row2positions[i++], viewer.get(), input.get());
-		S.show_details = qt->ui.detailBox->isChecked();
-		S.qt = qt;
-		vector<vector<int>> result = S.solve(single);
+		yy::Solver solver{};
+		solver.init(single, input->row2positions[i++], nullptr, qt, input->board->down + 1, input->board->right + 1);
+		solver.show_details = qt->ui.detailBox->isChecked();
+		solver.single_step = qt->ui.singleBox->isChecked();
+		solver.is_square = (input->board->right == input->board->down);
+		bool ok;
+		int n_threads = qt->ui.NTEdit->text().toInt(&ok);
+		if (!ok) n_threads = 1;
+		solver.solve(n_threads);
+		const auto &result = solver.getSols();
 		total_result += result.size();
 	}
 
@@ -53,11 +60,12 @@ QtAlgorithmX::QtAlgorithmX(QWidget *parent)
 	ui.setupUi(this);
 	this->setGeometry(QRect(desktop_width / 4, desktop_height / 4,
 		desktop_width / 2, desktop_height / 2));
-	//QPixmap bkgnd("..\\AlgorithmX\\q.jpg");
-	//bkgnd = bkgnd.scaled(this->size(), Qt::IgnoreAspectRatio);
-	//QPalette palette;
-	//palette.setBrush(QPalette::Background, bkgnd);
-	//this->setPalette(palette);
+
+	QPixmap bkgnd("..\\QtAlgorithmX\\q.jpg");
+	bkgnd = bkgnd.scaled(this->size(), Qt::IgnoreAspectRatio);
+	QPalette palette;
+	palette.setBrush(QPalette::Background, bkgnd);
+	this->setPalette(palette);
 }
 
 void QtAlgorithmX::onButtonClicked()
@@ -65,6 +73,11 @@ void QtAlgorithmX::onButtonClicked()
 	auto fileName = QFileDialog::getOpenFileName(this,
 		tr("Open File"), "/", tr("Text files (*.txt)"));
 	emit fileSelected(fileName);
+}
+
+void QtAlgorithmX::on_openButton_clicked() {
+	QtOpenGL *gl_window = new QtOpenGL(this);
+	gl_window->show();
 }
 
 void QtAlgorithmX::on_stopButton_clicked() {
